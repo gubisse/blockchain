@@ -43,6 +43,7 @@
     "vite-tsconfig-paths": "^4.2.1"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.49.4",
     "mathjs": "^14.4.0"
   }
 }
