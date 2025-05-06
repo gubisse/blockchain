@@ -1,8 +1,20 @@
 import { component$, useSignal, useStore, $, useTask$ } from "@builder.io/qwik";
-import { evaluate } from "mathjs";
 import { Header } from "~/components/Header";
 import { Footer } from "~/components/Footer";
 import type { Parametro } from "~/components/entidade";
+
+// Função para avaliar expressões matemáticas simples
+const evaluateExpression = (expression: string): number => {
+  try {
+    // Substitui variáveis por valores e avalia a expressão
+    // Suporta operações básicas: +, -, *, /
+    const safeEval = new Function(`return ${expression}`);
+    const result = safeEval();
+    return Number.isFinite(result) ? Number(result.toFixed(2)) : NaN;
+  } catch (error) {
+    return NaN;
+  }
+};
 
 export default component$(() => {
   const isModalOpen = useSignal(false);
@@ -72,12 +84,8 @@ export default component$(() => {
       formulaSubstituida = formulaSubstituida.replace(regex, valor.toString());
     });
 
-    try {
-      const resultado = evaluate(formulaSubstituida);
-      state.form.testResult = Number.isFinite(resultado) ? resultado.toFixed(2) : "Resultado inválido";
-    } catch (error) {
-      state.form.testResult = "Erro na fórmula";
-    }
+    const resultado = evaluateExpression(formulaSubstituida);
+    state.form.testResult = Number.isFinite(resultado) ? resultado : "Erro na fórmula";
   });
 
   // Função para salvar ou atualizar parâmetro
