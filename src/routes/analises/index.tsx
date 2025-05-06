@@ -314,7 +314,7 @@ export default component$(() => {
               <>
                 <p>
                   <strong>Cliente:</strong>{" "}
-                  {state.clientes.find((c) => c.id === isSelectedCliente.value.cliente)?.nome ?? "Desconhecido"}
+                  {state.clientes.find((c) => c.id === isSelectedCliente.value?.cliente)?.nome ?? "Desconhecido"}
                 </p>
                 <p>
                   <strong>Proforma:</strong> {isSelectedCliente.value.nome}
