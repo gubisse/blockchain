@@ -1,4 +1,4 @@
-import { supabase } from '~/lib/supabase';
+/*import { supabase } from '~/lib/supabase';
 
 // Interface para tipar objetos com campos de data
 interface HasDateFields {
@@ -83,4 +83,4 @@ export async function updateDadoEstoque<T extends HasDateFields>(collection: str
     console.error(`Erro ao atualizar em ${collection}:`, error);
     throw new Error(`Falha ao atualizar em ${collection}`);
   }
-}
+}*/

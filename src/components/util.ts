@@ -1,4 +1,4 @@
-import md5 from "blueimp-md5";
+/*import md5 from "blueimp-md5";
 import type { Role, Usuario } from "./entidade"; // Importando a função
 
 // Função utilitária para formatar Date como YYYY-MM-DD
@@ -61,4 +61,4 @@ export function buscarEndPointParaOLogado(usuarios: Usuario[], roles: Role[]): s
 export function terminarSessao(): boolean {
   localStorage.removeItem("login");
   return true;
-}
+}*/

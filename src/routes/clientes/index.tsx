@@ -126,17 +126,17 @@ export default component$(() => {
     }
 
     // Verificando se o nome, parâmetros e total a pagar estão corretos
-    if (!state.form.proforma.nome.trim()) {
+    if (!state.form.proforma.nome?.trim()) {
       state.erro = "O nome da proforma não pode ser vazio!";
       return;
     }
 
-    if (!state.form.proforma.parametros.trim()) {
+    if (!state.form.proforma.parametros?.trim()) {
       state.erro = "Os parâmetros não podem ser vazios!";
       return;
     }
 
-    if (state.form.proforma.totalpagar <= 0) {
+    if (Number(state.form.proforma.totalpagar) <= 0) {
       state.erro = "O valor total a pagar deve ser maior que zero!";
       return;
     }

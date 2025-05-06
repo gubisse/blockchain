@@ -14,7 +14,7 @@ export interface Proforma {
   parametros: string;
   totalpagar: number;
   data: string;
-  estado: "por analisar" | "analisada";
+  estado: string;
 }
 
 export interface Parametro {
