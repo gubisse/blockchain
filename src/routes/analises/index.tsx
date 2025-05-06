@@ -172,9 +172,10 @@ export default component$(() => {
                 .filter((d) => d.estado === "por analisar")
                 .map((d) => (
                   <option key={d.id} value={d.id}>
-                    {state.clientes.find((dc) => dc.id === d.cliente)?.nome}---{d.nome}---{d.data}---{d.parametros}
+                    {`${state.clientes.find((dc) => dc.id === d.cliente)?.nome ?? "Desconhecido"} --- ${d.nome} --- ${d.data} --- ${d.parametros}`}
                   </option>
-                ))}
+              ))}
+
             </select>
             <select
               name="parametro"

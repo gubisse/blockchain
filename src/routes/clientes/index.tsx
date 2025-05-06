@@ -74,7 +74,7 @@ export default component$(() => {
 
   })
 
-  const parametroSelecionadoTipadorFormProforma = $((dado: Parametro, marcado: boolean) => {
+  const parametroSelecionadoTipadorFormProforma = $((dado: any, marcado: boolean) => {
     const id = String(dado.id);
 
     // Garante que totalpagar começa com número
@@ -141,16 +141,16 @@ export default component$(() => {
       return;
     }
 
-    // Adicionando a proforma
     const novaProforma: Proforma = {
       cliente: isSelectedCliente.value?.id?.trim() as string,
       nome: state.form.proforma.nome as string,
       parametros: state.form.proforma.parametros as string,
-      totalpagar: +state.form.proforma.totalpagar,
-      estado: "Pendente", // Estado pode ser 'Pendente', 'Resolvido', etc.
-      data: new Date().toISOString(), // Data no formato ISO
-      id: String(state.proformas.length + 1), // Geração simples de ID
+      totalpagar: +(state.form.proforma.totalpagar ?? "0"),
+      estado: "Pendente",
+      data: new Date().toISOString(),
+      id: String(state.proformas.length + 1),
     };
+
 
     // Salvando a proforma
     state.proformas.push(novaProforma);
@@ -159,7 +159,7 @@ export default component$(() => {
 
     form.reset(); // Resetando o formulário
     isSelectedCliente.value = null; 
-    isActiveModalCliente.value = false; 
+    isActiveModalCliente.value = null; 
     state.form.proforma = {};
     state.mensagem = "Proforma salva com sucesso!"; // Exibindo a mensagem de sucesso
     state.erro = ""; // Limpando qualquer erro anterior
