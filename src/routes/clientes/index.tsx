@@ -6,7 +6,6 @@ import type { Cliente, Proforma, Parametro } from "~/components/entidade";
 export default component$(() => {
   
   const carregando = useSignal(false);
-  const mensagemcarregando = useSignal("");
   const visualizacaoTabela = useSignal(false);
 
   const isActiveModalCliente = useSignal<null | 'novop' | 'editarc' | 'proformas'>(null);
@@ -117,7 +116,6 @@ export default component$(() => {
   const addProforma = $((e: Event) => {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
-    const dados = Object.fromEntries(new FormData(form).entries());
 
     // Verificando se o cliente foi selecionado
     if (!isSelectedCliente.value) {

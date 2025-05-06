@@ -3,8 +3,7 @@ import { Header } from "~/components/Header";
 import { Footer } from "~/components/Footer";
 
 export default component$(() => {
-  const carregando = useSignal(false);
-  const mensagemcarregando = useSignal("");
+  const carregando = useSignal(true);
 
   return (
     <>
