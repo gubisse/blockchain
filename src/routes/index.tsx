@@ -1,4 +1,4 @@
-import { component$, useSignal } from "@builder.io/qwik";
+import { component$ } from "@builder.io/qwik";
 import { Header } from "~/components/Header";
 import { Footer } from "~/components/Footer";
 
