@@ -1,64 +1,119 @@
-/*import md5 from "blueimp-md5";
-import type { Role, Usuario } from "./entidade"; // Importando a função
+import { $ } from '@builder.io/qwik';
+import md5 from 'blueimp-md5'; 
 
-// Função utilitária para formatar Date como YYYY-MM-DD
-export const formatDateToInput = (date?: Date): string => {
-  if (!date || isNaN(date.getTime())) {
-    return new Date().toISOString().split('T')[0]; // Fallback para data atual
-  }
-  return date.toISOString().split('T')[0]; // Ex.: "2025-04-29"
-};
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
-export const parseDate = (input: string): Date => {
-  const parsed = new Date(input);
-  if (isNaN(parsed.getTime())) {
-    return new Date();
-  }
-  return parsed;
-};
+import type { Usuario } from './entidade';
+import { usuarios } from "./dado";
 
-export const semanaDoAno = (data: string | Date) => {
-  const d = new Date(data);
-  const umJaneiro = new Date(d.getFullYear(), 0, 1);
-  const dias = Math.floor((d.getTime() - umJaneiro.getTime()) / (24 * 60 * 60 * 1000));
-  const numeroSemana = Math.ceil((dias + umJaneiro.getDay() + 1) / 7);
-  return `${numeroSemana}`;
-};
+const USUARIOS_FIXOS: Usuario[] = usuarios;
 
-export function geradorDeSenhaMD5(senhaBruta: string): string {
-  const senha = senhaBruta?.trim() || "";
-  return md5(senha);
-}
+export const AlegarLogin = $(async (nome: string, senha: string) => {
+  const usuario = USUARIOS_FIXOS.find(u => u.nome === nome.trim());
 
-export function comparadorDeSenha( senha: string , senhaBD: string): boolean {
-  const senhaDigitada = senha?.trim() as string;
-  const senhaCriptografada = md5(senhaDigitada) as string;
-  return senhaCriptografada === senhaBD as string;
-}
-
-export function buscarEndPointParaOLogado(usuarios: Usuario[], roles: Role[]): string {
-  const loginStr = localStorage.getItem("login");
-  if (!loginStr) return "l";
-
-  const login = JSON.parse(loginStr);
-
-  if (Array.isArray(usuarios) && Array.isArray(roles)) {
-    const usuario = usuarios.find((d: any) => d.id === login.usuario);
-    if (usuario) {
-      const role = roles.find((r: any) => r.id === usuario.role);
-      if (role && role.id) {
-        if (role.id === "1d60c7cf-f845-48cf-b0d1-44d252299b04") return "d/tp";
-        if (role.id === "aa42686d-8b42-43b9-927e-33640a38c8d9") return "d/td";
-        if (role.id === "c7dfc45b-7cd5-4180-b963-c1f441d78792") return "d/e";
-      }
-    }
+  if (!usuario) {
+    return { sucesso: false, mensagem: 'Usuário não encontrado.' };
   }
 
-  return "l";
-}
+  const senhaDigitada = md5(senha.trim());
 
+  if (usuario.senha !== senhaDigitada) {
+    return { sucesso: false, mensagem: 'Senha incorreta.' };
+  }
 
-export function terminarSessao(): boolean {
-  localStorage.removeItem("login");
+  const objetoLogin = {
+    usuario: usuario.id,
+    data: new Date().toISOString(),
+  };
+
+  localStorage.setItem('login', JSON.stringify(objetoLogin));
+
+  return { sucesso: true, mensagem: 'Login efetuado com sucesso.', usuario: objetoLogin };
+});
+
+export const VerificarLogin = $(() => {
+  const login = localStorage.getItem('login');
+  if (!login) return false;
+
+  try {
+    const obj = JSON.parse(login);
+    return obj && obj.usuario;
+  } catch {
+    return false;
+  }
+});
+
+export const TerminarLogin = $(() => {
+  localStorage.removeItem('login');
   return true;
-}*/
+});
+
+
+import { $, type QRL } from '@builder.io/qwik';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
+export const GerarPDF: QRL<() => void> = $(() => {
+  const elementoOriginal = document.getElementById('relatorio-pdf');
+  if (!elementoOriginal) return;
+
+  // Clona o elemento e aplica estilos básicos para evitar problemas de parsing
+  const clone = elementoOriginal.cloneNode(true) as HTMLElement;
+  clone.style.backgroundColor = '#ffffff';
+  clone.style.color = '#000000';
+  clone.style.fontFamily = 'sans-serif';
+
+  // Esconde o clone fora da tela
+  const container = document.createElement('div');
+  container.style.position = 'fixed';
+  container.style.top = '-9999px';
+  container.appendChild(clone);
+  document.body.appendChild(container);
+
+  html2canvas(clone, { scale: 2 })
+    .then((canvas) => {
+      const imgData = canvas.toDataURL('image/jpeg', 1.0);
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      const imgProps = {
+        width: canvas.width,
+        height: canvas.height,
+      };
+
+      const ratio = pageWidth / imgProps.width;
+      const imgWidth = pageWidth;
+      const imgHeight = imgProps.height * ratio;
+
+      let position = 0;
+
+      // Adiciona imagem à primeira página e divide em múltiplas páginas se necessário
+      if (imgHeight <= pageHeight) {
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      } else {
+        while (position < imgHeight) {
+          pdf.addImage(imgData, 'JPEG', 0, -position, imgWidth, imgHeight);
+          position += pageHeight;
+          if (position < imgHeight) pdf.addPage();
+        }
+      }
+
+      pdf.save('relatorio-proforma.pdf');
+    })
+    .catch((err) => {
+      console.error('Erro ao gerar PDF:', err);
+    })
+    .finally(() => {
+      container.remove();
+    });
+});
+
+
+

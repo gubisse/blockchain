@@ -1,3 +1,9 @@
+export interface Usuario {
+  id: string;
+  nome: string;
+  senha: string; // já em md5
+}
+
 export interface Cliente {
   id: string;
   nome: string;
@@ -17,10 +23,16 @@ export interface Proforma {
   estado: string;
 }
 
+export interface elementosQuimicos118 {
+  id: string;
+  nome: string;
+  descricao:string;
+}
+
 export interface Parametro {
   id: string;
   categoria: string;
-  nome: string;
+  elementosQuimicos118: string;
   valor: number;
   campos: string;
   formula: string;
@@ -33,4 +45,9 @@ export interface Analise {
   valorfinal: number;
   data: string;
   [key: string]: string | number; // Para campos dinâmicos como x, y, z
+}
+export interface Comprovativo {
+  id: string;
+  proforma: string;
+  data: string;
 }

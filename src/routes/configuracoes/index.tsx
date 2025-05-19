@@ -1,7 +1,8 @@
 import { component$, useSignal, useStore, $, useTask$ } from "@builder.io/qwik";
 import { Header } from "~/components/Header";
 import { Footer } from "~/components/Footer";
-import type { Parametro } from "~/components/entidade";
+import type { Parametro, Proforma, Analise } from "~/components/entidade";
+import { clientes, parametros, proformas, analises, elementosQuimicos118 } from "~/components/dado";
 
 // Função para avaliar expressões matemáticas simples
 const evaluateExpression = (expression: string): number => {
@@ -24,6 +25,8 @@ export default component$(() => {
 
   const state = useStore<{
     parametros: Parametro[];
+    proformas: Proforma[];
+    analises: Analise[];
     form: {
       id?: string;
       categoria: string;
@@ -36,6 +39,8 @@ export default component$(() => {
     };
   }>({
     parametros: [],
+    proformas: [],
+    analises: [],
     form: {
       categoria: "",
       nome: "",
@@ -49,26 +54,40 @@ export default component$(() => {
 
   // Carrega parâmetros iniciais (mockados, podem vir de uma API)
   useTask$(() => {
-    state.parametros = [
-      { id: "Zn", categoria: "Agua", nome: "Cinzas", valor: 1100, campos: "x,y", formula: "x/y" },
-      { id: "Na", categoria: "Agua", nome: "Sódio", valor: 500, campos: "x,y,z", formula: "x*y/z" },
-      { id: "Mg", categoria: "Agua", nome: "Magnésio", valor: 750, campos: "x,y,z", formula: "x/z + y" },
-      { id: "a14e", categoria: "Alimento", nome: "Zinco", valor: 900, campos: "x,y,z", formula: "x*y/z" },
-      { id: "a15e", categoria: "Alimento", nome: "Ferro", valor: 300, campos: "x,y,z", formula: "x - y * z" },
-      { id: "a17e", categoria: "Agua e Alimento", nome: "Cálcio", valor: 1000, campos: "x,y,z", formula: "x/y*x/z" },
-    ];
+    state.parametros = parametros;
+    state.proformas = proformas;
+    state.analises = analises;
   });
 
-  // Atualiza valores de teste quando os campos mudam
-  useTask$(({ track }) => {
-    track(() => state.form.campos);
-    state.form.testValues = {};
-    state.form.testResult = "";
-    const campos = state.form.campos.split(",").filter((c) => c.trim());
-    campos.forEach((campo) => {
-      state.form.testValues[campo] = 0;
+    // Atualiza valores de teste quando os campos mudam
+    useTask$(({ track }) => {
+      track(() => state.form.campos);
+      state.form.testValues = {};
+      state.form.testResult = "";
+      const campos = state.form.campos.split(",").filter((c) => c.trim());
+      campos.forEach((campo) => {
+        state.form.testValues[campo] = 0;
+      });
     });
+
+    useTask$(({ track }) => {
+      track(() => mensagem.value);
+      if (mensagem.value) {
+        setTimeout(() => {
+          mensagem.value = "";
+        }, 4000);
+      }
+    });
+
+  useTask$(({ track }) => {
+    track(() => erro.value);
+    if (erro.value) {
+      setTimeout(() => {
+        erro.value = "";
+      }, 6000);
+    }
   });
+
 
   // Função para testar a fórmula
   const testarFormula = $(() => {
@@ -93,7 +112,7 @@ export default component$(() => {
     e.preventDefault();
     const { id, categoria, nome, valor, campos, formula } = state.form;
 
-    if (!categoria || !nome || !valor || !campos || !formula) {
+    if (!categoria || !nome || !valor || !campos || !formula ) {
       erro.value = "Todos os campos são obrigatórios";
       return;
     }
@@ -129,24 +148,43 @@ export default component$(() => {
 
   // Função para editar parâmetro
   const editarParametro = $((parametro: Parametro) => {
-    state.form = {
-      id: parametro.id,
-      categoria: parametro.categoria,
-      nome: parametro.nome,
-      valor: parametro.valor,
-      campos: parametro.campos,
-      formula: parametro.formula,
-      testValues: parametro.campos.split(",").reduce((acc, campo) => ({ ...acc, [campo]: 0 }), {}),
-      testResult: "",
-    };
-    editingParametro.value = parametro;
-    isModalOpen.value = true;
+    //Procurar se o parametro esta associado a alguma proforma
+    const parametroNaAnalise = state.proformas.filter((d) =>
+      d.parametros.split(",").includes(parametro.id)
+    );
+
+    if(parametroNaAnalise.length === 0){
+      state.form = {
+        id: parametro.id,
+        categoria: parametro.categoria,
+        nome: parametro.nome,
+        valor: parametro.valor,
+        campos: parametro.campos,
+        formula: parametro.formula,
+        testValues: parametro.campos.split(",").reduce((acc, campo) => ({ ...acc, [campo]: 0 }), {}),
+        testResult: "",
+      };
+      erro.value = "";
+      editingParametro.value = parametro;
+      isModalOpen.value = true;
+    }else{
+      erro.value = "Não é possível editar este parâmetro, pois ele já está vinculado a uma operação em proformas.";
+    }
   });
 
   // Função para remover parâmetro
   const removerParametro = $((id: string) => {
-    state.parametros = state.parametros.filter((p) => p.id !== id);
-    mensagem.value = "Parâmetro removido com sucesso!";
+    //Procurar se o parametro esta associado a alguma proforma
+    const parametroNaAnalise = state.proformas.filter((d) =>
+      d.parametros.split(",").includes(id)
+    );
+
+    if(parametroNaAnalise.length === 0){
+      state.parametros = state.parametros.filter((p) => p.id !== id);
+      mensagem.value = "Parâmetro removido com sucesso!";
+    }else{
+      erro.value = "Não é possível eliminar este parâmetro, pois ele já está vinculado a uma operação em proformas.";
+    }
   });
 
   return (
@@ -163,53 +201,42 @@ export default component$(() => {
               isModalOpen.value = true;
             }}
           >
-            Adicionar Parâmetro
+            Adicionar parâmetro
           </button>
         </div>
 
-        {mensagem.value && <div class="text-green-600 mb-4">{mensagem.value}</div>}
-        {erro.value && <div class="text-red-600 mb-4">{erro.value}</div>}
-
-        {/* Tabela de Parâmetros */}
-        <div class="bg-white p-4 rounded-xl shadow mb-6">
-          <table class="w-full text-left">
-            <thead>
-              <tr class="bg-gray-100">
-                <th class="p-3">Nome</th>
-                <th class="p-3">Categoria</th>
-                <th class="p-3">Valor</th>
-                <th class="p-3">Campos</th>
-                <th class="p-3">Fórmula</th>
-                <th class="p-3">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {state.parametros.map((parametro) => (
-                <tr key={parametro.id} class="border-t">
-                  <td class="p-3">{parametro.nome}</td>
-                  <td class="p-3">{parametro.categoria}</td>
-                  <td class="p-3">{parametro.valor}</td>
-                  <td class="p-3">{parametro.campos}</td>
-                  <td class="p-3">{parametro.formula}</td>
-                  <td class="p-3">
-                    <button
-                      class="text-blue-600 hover:underline mr-2"
-                      onClick$={() => editarParametro(parametro)}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      class="text-red-600 hover:underline"
-                      onClick$={() => removerParametro(parametro.id)}
-                    >
-                      Remover
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* Lista de Parâmetros como Cards */}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          {state.parametros.map((parametro) => (
+            <div key={parametro.id} class="bg-white rounded-xl shadow p-4 space-y-2">
+              <h3 class="text-lg font-semibold text-blue-700">{parametro.id} - {elementosQuimicos118.find((d) => d.id === parametro.id)?.nome}</h3>
+              <div class="grid grid-cols-2 between">
+                <p><span class="font-medium text-gray-600">Categoria:</span> {parametro.categoria}</p>
+                <p><span class="font-medium text-gray-600">Valor:</span> {parametro.valor}</p>
+              </div>
+              <div class="grid grid-cols-2 between">
+                <p><span class="font-medium text-gray-600">Campos:</span> {parametro.campos}</p>
+                <p><span class="font-medium text-gray-600">Fórmula:</span> {parametro.formula}</p>
+              </div>
+              <p>{elementosQuimicos118.find((d) => d.id === parametro.id)?.descricao}</p>
+              <div class="flex justify-end gap-2 pt-2">
+                <button
+                  class="text-sm text-blue-600 hover:underline"
+                  onClick$={() => editarParametro(parametro)}
+                >
+                  Editar
+                </button>
+                <button
+                  class="text-sm text-red-600 hover:underline"
+                  onClick$={() => removerParametro(parametro.id)}
+                >
+                  Remover
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
+
       </main>
 
       {/* Modal para Adicionar/Editar Parâmetro */}
@@ -232,23 +259,26 @@ export default component$(() => {
             <form preventdefault:submit onSubmit$={salvarParametro}>
               <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700">Categoria</label>
-                <input
-                  type="text"
-                  class="border p-2 rounded w-full"
-                  value={state.form.categoria}
-                  onInput$={(e) => (state.form.categoria = (e.target as HTMLInputElement).value)}
-                  required
-                />
+                <select name="nome" value={state.form.categoria} class="border p-2 rounded w-full" onChange$={(e) => state.form.categoria = (e.target as HTMLInputElement).value}>
+                  <option disabled selected>Selecione categoria</option>
+                  {[...new Set(state.parametros.map((d) => d.categoria))].map((nome) => (
+                    <option key={nome} value={nome}>
+                      {nome}
+                    </option>
+                  ))}
+                </select>
               </div>
+
               <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700">Nome</label>
-                <input
-                  type="text"
-                  class="border p-2 rounded w-full"
-                  value={state.form.nome}
-                  onInput$={(e) => (state.form.nome = (e.target as HTMLInputElement).value)}
-                  required
-                />
+                <select name="nome" value={state.form.elementosQuimicos118} class="border p-2 rounded w-full" onChange$={(e) => state.form.elementosQuimicos118 = (e.target as HTMLInputElement).value}>
+                  <option disabled selected>Selecione categoria</option>
+                  {[...new Set(elementosQuimicos118.sort((a,b) => b-a).map((d) => d))].map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.nome}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700">Valor</label>
@@ -318,7 +348,29 @@ export default component$(() => {
             </form>
           </div>
         </div>
+
+
       )}
+
+      {/* Modal de Mensagem */}
+      {mensagem.value && (
+        <div class="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
+          <div class="bg-green-100 border border-green-400 text-green-800 px-6 py-4 rounded shadow-xl max-w-sm text-center relative">
+            <button class="absolute top-2 right-2 text-green-700 hover:text-green-900" onClick$={() => mensagem.value = ""}>✕</button>
+            <p>{mensagem.value}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Erro */}
+      {erro.value && (
+        <div class="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
+          <div class="bg-red-100 border border-red-400 text-red-800 px-6 py-4 rounded shadow-xl max-w-sm text-center relative">
+            <button class="absolute top-2 right-2 text-red-700 hover:text-red-900" onClick$={() => erro.value = ""}>✕</button>
+            <p>{erro.value}</p>
+          </div>
+        </div>
+      )}  
 
       <Footer />
     </>

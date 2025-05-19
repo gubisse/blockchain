@@ -1,7 +1,8 @@
 import { component$, useSignal, useStore, $, useTask$ } from "@builder.io/qwik";
 import { Header } from "~/components/Header";
 import { Footer } from "~/components/Footer";
-import type { Cliente, Proforma, Parametro } from "~/components/entidade";
+import type { Cliente, Proforma, Parametro, Comprovativo } from "~/components/entidade";
+import { clientes, parametros, proformas, comprovativos, elementosQuimicos118 } from "~/components/dado";
 
 export default component$(() => {
   
@@ -16,6 +17,7 @@ export default component$(() => {
     clientes: Partial<Cliente>[];
     parametros: Partial<Parametro>[];
     proformas: Partial<Proforma>[];
+    comprovativos: Partial<Comprovativo>[];
     parametrosSelecionados: string[]; // Aqui estava o problema
     form: {
       cliente: Partial<Cliente>;
@@ -30,6 +32,7 @@ export default component$(() => {
     clientes: [],
     parametros: [],
     proformas: [],
+    comprovativos: [],
     parametrosSelecionados: [],
     form: {
       cliente: {},
@@ -43,35 +46,30 @@ export default component$(() => {
   });
 
   useTask$(() => {
-    state.clientes = [
-      {id: "a1", nome: "Antonio Miguel Antonio", telefone: "845421639", email: "e@gmail.com", morada: "Bairro 5 Chimoio", data: "12/05/2022"},
-      {id: "a2", nome: "Merdi Mutombo", telefone: "875421632", email: "r@gmail.com", morada: "Bairro 5 Chimoio", data: "12/05/2023"},
-      {id: "a12", nome: "Albano Antonio", telefone: "875421633", email: "ew@gmail.com", morada: "Bairro 5 Chimoio", data: "12/05/2025"},
-    ]
-
-    state.parametros = [
-      // Categoria: Agua
-      {id: "a11e", categoria: "Agua", nome: "Cinzas", valor: 1100, formula: "x/y"},
-      {id: "a12e", categoria: "Agua", nome: "Sódio", valor: 500, formula: "x*y/z"},
-      {id: "a13e", categoria: "Agua", nome: "Magnésio", valor: 750, formula: "x/z + y"},
-      
-      // Categoria: Alimento
-      {id: "a14e", categoria: "Alimento", nome: "Zinco", valor: 900, formula: "x*y/z"},
-      {id: "a15e", categoria: "Alimento", nome: "Ferro", valor: 300, formula: "x - y * z"},
-      {id: "a16e", categoria: "Alimento", nome: "Cálcio", valor: 1200, formula: "x/y + z"},
-      
-      // Categoria: Agua e Alimento
-      {id: "a17e", categoria: "Agua e Alimento", nome: "Cálcio", valor: 1000, formula: "x/y*x/z"},
-      {id: "a18e", categoria: "Agua e Alimento", nome: "Fósforo", valor: 400, formula: "x - y * z"},
-      {id: "a19e", categoria: "Agua e Alimento", nome: "Potássio", valor: 800, formula: "(x + y) / z"},
-    ];
-
-    state.proformas = [
-      {id: "a11e", cliente: "a1", nome: "Analise de Agua", parametros: "pa1,pa2,pa3,", totalpagar: 1000, data: "12/05/2022", estado: "resolvido"},
-      {id: "a1e1", cliente: "a1", nome: "Analise de Alimentos", parametros: "pa1,pa2,pa3,", totalpagar: 1000, data: "12/05/2022", estado: "nresolvido"}
-    ]
-
+    state.clientes = clientes;
+    state.parametros = parametros;
+    state.proformas = proformas;
+    state.comprovativos = comprovativos;
   })
+
+  useTask$(({ track }) => {
+    track(() => state.mensagem);
+    if (state.mensagem) {
+      setTimeout(() => {
+        state.mensagem = "";
+      }, 4000);
+    }
+  });
+
+  useTask$(({ track }) => {
+    track(() => state.erro);
+    if (state.erro) {
+      setTimeout(() => {
+        state.erro = "";
+      }, 6000);
+    }
+  });
+
 
   const parametroSelecionadoTipadorFormProforma = $((dado: any, marcado: boolean) => {
     const id = String(dado.id);
@@ -163,6 +161,38 @@ export default component$(() => {
     state.erro = ""; // Limpando qualquer erro anterior
   });
 
+  const addComprovativo = $((e: Event, proformaId: string) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+
+    if (!isSelectedCliente.value) {
+      state.erro = "Por favor, selecione um cliente!";
+      return;
+    }
+
+    const now = new Date();
+    const dataFormatada = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    const novo: Comprovativo = {
+      id: String(state.comprovativos.length + 1),
+      proforma: proformaId,
+      data: dataFormatada, // ✅ agora está no formato desejado
+    };
+
+    state.comprovativos.push(novo);
+
+    console.log("Comprovativo salvo:", novo);
+
+    form.reset();
+    isSelectedCliente.value = null;
+    isActiveModalCliente.value = null;
+    state.form.proforma = {};
+    state.mensagem = "Comprovativo salvo com sucesso!";
+    state.erro = "";
+  });
+
+
+
 
 return (
     <>
@@ -186,11 +216,11 @@ return (
           class="bg-white p-4 rounded-xl shadow mb-6"
         >
           <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <input name="nome" placeholder="Nome" required class="border p-2 rounded" />
-            <input name="telefone" placeholder="Telefone" required class="border p-2 rounded" />
-            <input name="email" placeholder="Email" type="email" required class="border p-2 rounded" />
-            <input name="morada" placeholder="Morada" required class="border p-2 rounded" />
-            <input name="data" placeholder="Data" required class="border p-2 rounded" />
+            <input type="text" name="nome" placeholder="Nome" required class="border p-2 rounded" />
+            <input type="text" name="telefone" placeholder="Telefone" required class="border p-2 rounded" />
+            <input type="email" name="email" placeholder="Email" type="email" required class="border p-2 rounded" />
+            <input type="text" name="morada" placeholder="Morada" required class="border p-2 rounded" />
+            <input type="datetime-local" value={new Date().toISOString().slice(0, 16)} name="data" placeholder="Data" required class="border p-2 rounded" />
           </div>
           <div class="mt-4 text-right">
             <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
@@ -198,10 +228,6 @@ return (
             </button>
           </div>
         </form>
-
-        {state.mensagem && (
-          <div class="text-green-600 mb-4">{state.mensagem}</div>
-        )}
 
         <div class="flex justify-between items-center mb-3">
           <h2 class="text-lg font-semibold uppercase">Clientes Cadastrados</h2>
@@ -252,6 +278,7 @@ return (
                     class="bg-yellow-500 text-white px-3 py-1 rounded text-sm hover:bg-yellow-600"
                     onClick$={() => {
                       isSelectedCliente.value = c;
+                      state.form.cliente = c;
                       isActiveModalCliente.value = "editarc";
                     }}
                   >
@@ -347,6 +374,58 @@ return (
             {isActiveModalCliente.value === "editarc" && (
               <>
                 <h2 class="text-lg font-bold mb-4">Editar :: {isSelectedCliente.value?.nome}</h2>
+                <form preventdefault:submit onSubmit$={addCliente}>
+                  <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">Nome</label>
+                    <input
+                      type="text"
+                      class="border p-2 rounded w-full"
+                      value={isSelectedCliente.value?.nome}
+                      onInput$={(e) => (state.form.cliente.nome = (e.target as HTMLInputElement).value)}
+                      required
+                    />
+                  </div>  
+                  <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">Telefone</label>
+                    <input
+                      type="text"
+                      class="border p-2 rounded w-full"
+                      value={isSelectedCliente.value?.telefone}
+                      onInput$={(e) => (state.form.cliente.telefone = (e.target as HTMLInputElement).value)}
+                      required
+                    />
+                  </div>  
+                  <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">Email</label>
+                    <input
+                      type="email"
+                      class="border p-2 rounded w-full"
+                      value={isSelectedCliente.value?.email}
+                      onInput$={(e) => (state.form.cliente.email = (e.target as HTMLInputElement).value)}
+                      required
+                    />
+                  </div>  
+                  <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">Morada</label>
+                    <input
+                      type="text"
+                      class="border p-2 rounded w-full"
+                      value={isSelectedCliente.value?.morada}
+                      onInput$={(e) => (state.form.cliente.morada = (e.target as HTMLInputElement).value)}
+                      required
+                    />
+                  </div>  
+                  <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">Data</label>
+                    <input
+                      type="datetime-local"
+                      class="border p-2 rounded w-full"
+                      value={isSelectedCliente.value?.data}
+                      onInput$={(e) => (state.form.cliente.data = (e.target as HTMLInputElement).value)}
+                      required
+                    />
+                  </div>
+                </form>
               </>
             )}
 
@@ -357,10 +436,51 @@ return (
                   {state.proformas.filter((d) => d.cliente === isSelectedCliente.value?.id).map((c, i) => (
                     <div key={i} class="bg-white border p-4 rounded-xl shadow-sm">
                       <h3 class="text-lg font-bold uppercase">{c.nome}</h3>
-                      <p class="text-sm"><strong>Cliente:</strong> {c.cliente}</p>
-                      <p class="text-sm"><strong>Parametros:</strong> {c.parametros}</p>
+                      <p class="text-sm font-bold">Parâmetros:</p>
+                      <div class="grid grid-cols-2 gap-2 mt-2">
+                        {c.parametros.split(',').map((pid) => {
+                          const parametro = elementosQuimicos118.find(p => p.id === pid.trim());
+                          return parametro ? (
+                            <div class="border p-2 rounded bg-gray-100" key={pid}>
+                              <p class="text-sm font-semibold">{parametro.nome}</p>
+                              {/* Adicione mais detalhes se desejar */}
+                              <p class="text-xs text-gray-600">{parametro.id}</p>
+                            </div>
+                          ) : (
+                            <div class="border p-2 rounded bg-red-100" key={pid}>
+                              <p class="text-sm text-red-600">Não encontrado: {pid}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+
                       <p class="text-sm"><strong>Total:</strong> {c.totalpagar}</p>
                       <p class="text-sm"><strong>Data:</strong> {c.data}</p>
+                      {state.comprovativos.find(d => d.proforma === c.id)?.data ? (
+                        <>
+                          <p class="text-sm font-bold uppercase mt-3 text-green-600">Comprovada</p>
+                          <p class="text-sm">
+                            <strong>Data:</strong> {state.comprovativos.find(d => d.proforma === c.id)?.data}
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p class="text-sm italic text-red-600 mt-3">Ainda sem comprovativo registrado.</p>
+
+                          <form preventdefault:submit onSubmit$={(e) => addComprovativo(e, c.id)} class="mt-2 space-y-2">
+                            <label class="flex items-center space-x-2 text-sm">
+                              <input type="checkbox" required class="border" />
+                              <span>Confirmar pagamento</span>
+                            </label>
+                            <button type="submit" class="bg-blue-600 text-white text-sm px-3 py-1 rounded hover:bg-blue-700">
+                              Registrar Comprovativo
+                            </button>
+                          </form>
+
+                        </>
+
+                      )}
+
                       
                     </div>
                   ))}
@@ -371,6 +491,25 @@ return (
         </div>
       )}
 
+      {/* Modal de Mensagem */}
+      {state.mensagem && (
+        <div class="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
+          <div class="bg-green-100 border border-green-400 text-green-800 px-6 py-4 rounded shadow-xl max-w-sm text-center relative">
+            <button class="absolute top-2 right-2 text-green-700 hover:text-green-900" onClick$={() => state.mensagem = ""}>✕</button>
+            <p>{state.mensagem}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Erro */}
+      {state.erro && (
+        <div class="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
+          <div class="bg-red-100 border border-red-400 text-red-800 px-6 py-4 rounded shadow-xl max-w-sm text-center relative">
+            <button class="absolute top-2 right-2 text-red-700 hover:text-red-900" onClick$={() => state.erro = ""}>✕</button>
+            <p>{state.erro}</p>
+          </div>
+        </div>
+      )}  
       <Footer />
     </>
   );

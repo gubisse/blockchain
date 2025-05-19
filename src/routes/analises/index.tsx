@@ -2,6 +2,8 @@ import { component$, useSignal, useStore, $, useTask$ } from "@builder.io/qwik";
 import { Header } from "~/components/Header";
 import { Footer } from "~/components/Footer";
 import type { Cliente, Proforma, Parametro, Analise } from "~/components/entidade";
+import { clientes, parametros, proformas, analises, elementosQuimicos118 } from "~/components/dado";
+import { relatorioEmPDF, relatorioEmPDF2  } from "~/components/geradorRelatorio";
 
 // Função para avaliar expressões matemáticas simples
 const evaluateExpression = (expression: string): number => {
@@ -18,77 +20,68 @@ export default component$(() => {
   const carregando = useSignal(false);
   const visualizacaoTabela = useSignal(false);
   const isActiveModalCliente = useSignal<null | "relatorio">(null);
-  const isSelectedCliente = useSignal<Partial<Proforma> | null>(null);
+  const isSelected = useSignal<Partial<Proforma> | null>(null);
 
-  const state = useStore<{
-    clientes: Cliente[];
+const state = useStore<{
+  clientes: Cliente[];
+  parametros: Parametro[];
+  parametrosEs: Parametro[];
+  proformas: Proforma[];
+  analises: Analise[];
+  camposNecessarios: string[];
+  valores: string[];
+  formulaPreenchida: string | number;
+  resultadoFormulaPreenchida: number;
+  dadosParaRelatorio: {
+    cliente: Partial<Cliente>;
+    proforma: Partial<Proforma>;
     parametros: Parametro[];
-    parametrosEs: Parametro[];
-    proformas: Proforma[];
     analises: Analise[];
-    camposNecessarios: string[];
-    valores: string[];
-    formulaPreenchida: string | number;
-    resultadoFormulaPreenchida: number;
-    form: {
-      proforma: Partial<Proforma>;
-      parametro: Partial<Parametro>;
-      analise: Partial<Analise>;
-      erro: string;
-      mensagem: string;
-    };
+  };
+  form: {
+    proforma: Partial<Proforma>;
+    parametro: Partial<Parametro>;
+    analise: Partial<Analise>;
     erro: string;
     mensagem: string;
-  }>({
-    clientes: [],
+  };
+  erro: string;
+  mensagem: string;
+}>({
+  clientes: [],
+  parametros: [],
+  parametrosEs: [],
+  proformas: [],
+  analises: [],
+  camposNecessarios: [],
+  valores: [],
+  formulaPreenchida: 0,
+  resultadoFormulaPreenchida: 0,
+  dadosParaRelatorio: {
+    cliente: {},
+    proforma: {},
     parametros: [],
-    parametrosEs: [],
-    proformas: [],
     analises: [],
-    camposNecessarios: [],
-    valores: [],
-    formulaPreenchida: 0,
-    resultadoFormulaPreenchida: 0,
-    form: {
-      proforma: {},
-      parametro: {},
-      analise: {},
-      erro: "",
-      mensagem: "",
-    },
+  },
+  form: {
+    proforma: {},
+    parametro: {},
+    analise: {},
     erro: "",
     mensagem: "",
-  });
+  },
+  erro: "",
+  mensagem: "",
+});
+
 
   useTask$(async () => {
     // Simula carregamento de API
-    state.clientes = [
-      { id: "a1", nome: "Antonio Miguel Antonio", telefone: "845421639", email: "e@gmail.com", morada: "Bairro 5 Chimoio", data: "12/05/2022" },
-      { id: "a2", nome: "Merdi Mutombo", telefone: "875421632", email: "r@gmail.com", morada: "Bairro 5 Chimoio", data: "12/05/2023" },
-      { id: "a12", nome: "Albano Antonio", telefone: "875421633", email: "ew@gmail.com", morada: "Bairro 5 Chimoio", data: "12/05/2025" },
-    ];
-    state.parametros = [
-      { id: "Zn", categoria: "Agua", nome: "Cinzas", valor: 1100, campos: "x,y", formula: "x/y" },
-      { id: "Na", categoria: "Agua", nome: "Sódio", valor: 500, campos: "x,y,z", formula: "x*y/z" },
-      { id: "Mg", categoria: "Agua", nome: "Magnésio", valor: 750, campos: "x,y,z", formula: "x/z + y" },
-      { id: "a14e", categoria: "Alimento", nome: "Zinco", valor: 900, campos: "x,y,z", formula: "x*y/z" },
-      { id: "a15e", categoria: "Alimento", nome: "Ferro", valor: 300, campos: "x,y,z", formula: "x - y * z" },
-      { id: "a16e", categoria: "Alimento", nome: "Cálcio", valor: 1200, campos: "x,y,z", formula: "x/y + z" },
-      { id: "a17e", categoria: "Agua e Alimento", nome: "Cálcio", valor: 1000, campos: "x,y,z", formula: "x/y*x/z" },
-      { id: "a18e", categoria: "Agua e Alimento", nome: "Fósforo", valor: 400, campos: "x,y,z", formula: "x - y * z" },
-      { id: "a19e", categoria: "Agua e Alimento", nome: "Potássio", valor: 800, campos: "x,y,z", formula: "(x + y) / z" },
-    ];
-    state.proformas = [
-      { id: "a11e", cliente: "a1", nome: "Analise de Agua", parametros: "Zn,Na,Mg", totalpagar: 1000, data: "12/05/2022", estado: "analisada" },
-      { id: "a111", cliente: "a12", nome: "Analise de Agua", parametros: "Na,Mg", totalpagar: 1000, data: "21/05/2022", estado: "analisada" },
-      { id: "a1e1", cliente: "a1", nome: "Analise de Alimentos", parametros: "a14e,a15e,a16e", totalpagar: 1000, data: "12/05/2022", estado: "analisada" },
-      { id: "a1e1e", cliente: "a1", nome: "Analise de Agua", parametros: "Zn,Na,Mg", totalpagar: 1000, data: "12/05/2022", estado: "por analisar" },
-    ];
-    state.analises = [
-      { id: "b1", proforma: "a11e", parametro: "Zn", valorfinal: 5284, data: "12/05/2022", x: 0, y: 0, z: 2 },
-      { id: "b2", proforma: "a111", parametro: "Na", valorfinal: 5284, data: "12/05/2022", x: 0, y: 0, z: 2 },
-      { id: "b3", proforma: "a1e1", parametro: "a14e", valorfinal: 5284, data: "12/05/2022", x: 0, y: 0, z: 2 },
-    ];
+    state.clientes = clientes;
+    state.parametros = parametros;
+    state.proformas = proformas;
+    state.analises = analises;
+
   });
 
   useTask$(({ track }) => {
@@ -118,6 +111,25 @@ export default component$(() => {
     }
     state.valores = [];
   });
+
+  useTask$(({ track }) => {
+    track(() => state.mensagem);
+    if (state.mensagem) {
+      setTimeout(() => {
+        state.mensagem = "";
+      }, 4000);
+    }
+  });
+
+  useTask$(({ track }) => {
+    track(() => state.erro);
+    if (state.erro) {
+      setTimeout(() => {
+        state.erro = "";
+      }, 6000);
+    }
+  });
+
 
   const calcular = $(() => {
     if (Object.keys(state.form.analise).length > 0) {
@@ -172,6 +184,23 @@ export default component$(() => {
     form.reset();
     state.mensagem = "Análise salva com sucesso!";
   });
+
+  const gerarRelatorioPDF = $(() => {
+    if (!state.dadosParaRelatorio ) {
+      state.erro = "Dados incompletos para o relatório";
+      console.log(state.dadosParaRelatorio)
+      return;
+    }
+    
+    relatorioEmPDF2({
+
+      dado: state.dadosParaRelatorio,
+      titulo: "Relatório de Escolas",
+    });
+  });
+
+
+
 
   return (
     <>
@@ -242,7 +271,6 @@ export default component$(() => {
             </button>
           </div>
         </form>
-        {state.mensagem && <div class="text-green-600 mb-4">{state.mensagem}</div>}
         <div class="flex justify-between items-center mb-3">
           <h2 class="text-lg font-semibold uppercase">Análises terminadas</h2>
           <button
@@ -263,14 +291,14 @@ export default component$(() => {
                     <h3 class="font-bold text-gray-800 uppercase">
                       {state.clientes.find((d) => d.id === proforma.cliente)?.nome ?? "Desconhecido"}
                     </h3>
-                    <p class="text-sm text-gray-500">{proforma.nome}</p>
+                    <p class="text-sm text-blue-500">{proforma.nome}::{proforma.data}</p>
                   </div>
                   <div class="space-y-2">
                     {analises.length > 0 ? (
                       analises.map((analise, j) => (
                         <div key={j} class="bg-gray-50 rounded-lg p-3 border">
                           <p class="text-sm text-gray-700">
-                            <strong class="text-gray-900">Parâmetro:</strong> {state.parametros.find((p) => p.id === analise.parametro)?.nome ?? analise.parametro}
+                            <strong class="text-gray-900">Parâmetro:</strong> {analise.parametro} - {elementosQuimicos118.find((p) => p.id === analise.parametro)?.nome ?? analise.parametro}
                           </p>
                           <p class="text-sm text-gray-700">
                             <strong class="text-gray-900">Resultado:</strong> {analise.valorfinal}
@@ -288,7 +316,7 @@ export default component$(() => {
                     <button
                       class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow"
                       onClick$={() => {
-                        isSelectedCliente.value = proforma;
+                        isSelected.value = proforma;
                         isActiveModalCliente.value = "relatorio";
                       }}
                     >
@@ -310,29 +338,90 @@ export default component$(() => {
               ✕
             </button>
             <h3 class="text-lg font-semibold mb-4">Relatório da Proforma</h3>
-            {isSelectedCliente.value && (
+            {isSelected.value && (
               <>
-                <p>
-                  <strong>Cliente:</strong>{" "}
-                  {state.clientes.find((c) => c.id === isSelectedCliente.value?.cliente)?.nome ?? "Desconhecido"}
-                </p>
-                <p>
-                  <strong>Proforma:</strong> {isSelectedCliente.value.nome}
-                </p>
-                <p>
-                  <strong>Data:</strong> {isSelectedCliente.value.data}
-                </p>
-                <p>
-                  <strong>Parâmetros:</strong> {isSelectedCliente.value.parametros}
-                </p>
-                <p>
-                  <strong>Total a Pagar:</strong> {isSelectedCliente.value.totalpagar}
-                </p>
+                <div id="relatorio-pdf" class="p-4 bg-white">
+                  <p>
+                    <strong>Cliente:</strong>{" "}
+                    {state.clientes.find((c) => c.id === isSelected.value?.cliente)?.nome ?? "Desconhecido"}
+                  </p>
+                  <p>
+                    <strong>Proforma:</strong> {isSelected.value.nome}
+                  </p>
+                  <p>
+                    <strong>Data:</strong> {isSelected.value.data}
+                  </p>
+                  <p>
+                    <strong>Parâmetros:</strong>
+                  </p>
+                  <div class="grid grid-cols-3 gap-2 mt-2">
+                    {isSelected.value.parametros.split(',').map((pid) => {
+                      const parametro = elementosQuimicos118.find(p => p.id === pid.trim());
+                      return parametro ? (
+                        <div
+                          class={`border p-2 rounded ${
+                            state.analises.find((d) => d.parametro === parametro.id && d.proforma === isSelected.value.id)?.valorfinal
+                              ? 'bg-green-100'
+                              : 'bg-red-50'
+                          }`}
+                          key={pid}
+                        >
+                          <p class="text-sm font-semibold">{parametro.nome}</p>
+                          <p class="text-xs text-gray-600">{parametro.id}</p>
+                          <p class="text-xs text-gray-600">{state.parametros.find((d)=> d.id === parametro.id)?.valor} MZN</p>
+                          <p class="text-xs text-gray-600">{state.analises.find((d)=> d.parametro === parametro.id && d.proforma === isSelected.value.id )?.valorfinal || "Por analisar"}</p>
+                        </div>
+                      ) : (
+                        <div class="border p-2 rounded bg-red-100" key={pid}>
+                          <p class="text-sm text-red-600">Não encontrado: {pid}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p>
+                    <strong>Total pago:</strong> {isSelected.value.totalpagar}
+                  </p>
+                </div>
+                <button
+                  onClick$={() => {
+                    state.dadosParaRelatorio.cliente = state.clientes.find((c) => c.id === isSelected.value?.cliente);
+                    state.dadosParaRelatorio.proforma = isSelected.value;
+                    state.dadosParaRelatorio.parametros = state.parametros;
+                    state.dadosParaRelatorio.analises = state.analises;
+                    gerarRelatorioPDF();
+                  }}
+                  class="mt-4 bg-blue-600 text-white px-4 py-2 rounded"
+                >
+                  Baixar PDF
+                </button>
+
+
               </>
             )}
           </div>
         </div>
       )}
+
+      {/* Modal de Mensagem */}
+      {state.mensagem && (
+        <div class="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
+          <div class="bg-green-100 border border-green-400 text-green-800 px-6 py-4 rounded shadow-xl max-w-sm text-center relative">
+            <button class="absolute top-2 right-2 text-green-700 hover:text-green-900" onClick$={() => state.mensagem = ""}>✕</button>
+            <p>{state.mensagem}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Erro */}
+      {state.erro && (
+        <div class="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
+          <div class="bg-red-100 border border-red-400 text-red-800 px-6 py-4 rounded shadow-xl max-w-sm text-center relative">
+            <button class="absolute top-2 right-2 text-red-700 hover:text-red-900" onClick$={() => state.erro = ""}>✕</button>
+            <p>{state.erro}</p>
+          </div>
+        </div>
+      )}  
+
       <Footer />
     </>
   );
