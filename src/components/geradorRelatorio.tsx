@@ -102,30 +102,30 @@ export const relatorioEmPDF2 = ({
     .filter((p): p is ParametroCompleto => !!p && 'nome' in p && 'descricao' in p);
 
   const tableData = parametrosSelecionados.map((param) => {
-	  const analise = dado.analises.find(
-	    (a) => a.parametro === param.id && a.proforma === dado.proforma?.id
-	  );
+    const analise = dado.analises.find(
+      (a) => a.parametro === param.id && a.proforma === dado.proforma?.id
+    );
 
-	  return [
-	    `${param.id} - ${param.nome}`,
-	    dado.parametros.find((d) => d.id === param.id)?.valor ?? 'N/A',
-	    analise ? analise.resultado?.toString() ?? analise.valorfinal : 'Por analisar',
-	  ];
-	});
+    return [
+      `${param.id} - ${param.nome}`,
+      dado.parametros.find((d) => d.id === param.id)?.valor ?? 'N/A',
+      analise ? analise.resultado?.toString() ?? 'Por analisar' : 'Por analisar',
+    ];
+  });
 
-	autoTable(doc, {
-	  startY: 108,
-	  head: [['Elemento', 'Custo em MZN', 'Resultado da análise']],
-	  body: tableData,
-	  theme: 'grid',
-	  styles: { fontSize: 9 },
-	  headStyles: {
-	    fillColor: [41, 128, 185],
-	    textColor: 255,
-	    fontStyle: 'bold',
-	  },
-	  alternateRowStyles: { fillColor: [245, 245, 245] },
-	});
+  autoTable(doc, {
+    startY: 108,
+    head: [['Elemento', 'Custo em MZN', 'Resultado da análise']],
+    body: tableData,
+    theme: 'grid',
+    styles: { fontSize: 9 },
+    headStyles: {
+      fillColor: [41, 128, 185],
+      textColor: 255,
+      fontStyle: 'bold',
+    },
+    alternateRowStyles: { fillColor: [245, 245, 245] },
+  });
 
   const finalY = (doc as any).lastAutoTable.finalY || 200;
 
