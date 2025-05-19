@@ -32,17 +32,18 @@ export const AlegarLogin = $(async (nome: string, senha: string) => {
   return { sucesso: true, mensagem: 'Login efetuado com sucesso.', usuario: objetoLogin };
 });
 
-export const VerificarLogin = $(() => {
+export const VerificarLogin = () => {
   const login = localStorage.getItem('login');
-  if (!login) return false;
+  if (!login) return null;
 
   try {
     const obj = JSON.parse(login);
     return obj && obj.usuario;
   } catch {
-    return false;
+    return null;
   }
-});
+};
+
 
 export const TerminarLogin = $(() => {
   localStorage.removeItem('login');
