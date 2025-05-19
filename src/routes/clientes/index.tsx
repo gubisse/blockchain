@@ -218,7 +218,7 @@ return (
           <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
             <input type="text" name="nome" placeholder="Nome" required class="border p-2 rounded" />
             <input type="text" name="telefone" placeholder="Telefone" required class="border p-2 rounded" />
-            <input type="email" name="email" placeholder="Email" type="email" required class="border p-2 rounded" />
+            <input type="email" name="email" placeholder="Email" required class="border p-2 rounded" />
             <input type="text" name="morada" placeholder="Morada" required class="border p-2 rounded" />
             <input type="datetime-local" value={new Date().toISOString().slice(0, 16)} name="data" placeholder="Data" required class="border p-2 rounded" />
           </div>
@@ -352,7 +352,7 @@ return (
                           onChange$={(e) => parametroSelecionadoTipadorFormProforma(d, (e.target as HTMLInputElement).checked)}
                         />
                         <label for={d.id} class="ml-2">
-                          {d.nome} ({d.valor} MZN)
+                          {d.id} ({d.valor} MZN)
                         </label>
                       </div>
                     ))}
@@ -438,7 +438,7 @@ return (
                       <h3 class="text-lg font-bold uppercase">{c.nome}</h3>
                       <p class="text-sm font-bold">Parâmetros:</p>
                       <div class="grid grid-cols-2 gap-2 mt-2">
-                        {c.parametros.split(',').map((pid) => {
+                        {c.parametros?.split(',').map((pid) => {
                           const parametro = elementosQuimicos118.find(p => p.id === pid.trim());
                           return parametro ? (
                             <div class="border p-2 rounded bg-gray-100" key={pid}>
@@ -467,7 +467,7 @@ return (
                         <>
                           <p class="text-sm italic text-red-600 mt-3">Ainda sem comprovativo registrado.</p>
 
-                          <form preventdefault:submit onSubmit$={(e) => addComprovativo(e, c.id)} class="mt-2 space-y-2">
+                          <form preventdefault:submit onSubmit$={(e) => addComprovativo(e, c?.id)} class="mt-2 space-y-2">
                             <label class="flex items-center space-x-2 text-sm">
                               <input type="checkbox" required class="border" />
                               <span>Confirmar pagamento</span>
