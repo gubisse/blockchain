@@ -1,7 +1,7 @@
 import { $ } from "@builder.io/qwik";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import type { Cliente, Proforma, Parametro, Analise, ElementosQuimicos118 } from "./entidade";
+import type { Cliente, Proforma, Parametro, Analise } from "./entidade";
 import { elementosQuimicos118 } from "./dado";
 
 export const relatorioEmPDF = $(
@@ -102,31 +102,30 @@ export const relatorioEmPDF2 = ({
     .filter((p): p is ParametroCompleto => !!p && 'nome' in p && 'descricao' in p);
 
   const tableData = parametrosSelecionados.map((param) => {
-    const analise = dado.analises.find(
-      (a) => a.parametro === param.id && a.proforma === dado.proforma?.id
-    );
+	  const analise = dado.analises.find(
+	    (a) => a.parametro === param.id && a.proforma === dado.proforma?.id
+	  );
 
-    return [
-      `${param.id} - ${param.nome}`,
-      dado.parametros.find((d) => d.id === param.id)?.valor ?? 'N/A',
-      analise ? analise.resultado?.toString() ?? 'Por analisar' : 'Por analisar',
-      `${param.valor ?? 0} MZN`,
-    ];
-  });
+	  return [
+	    `${param.id} - ${param.nome}`,
+	    dado.parametros.find((d) => d.id === param.id)?.valor ?? 'N/A',
+	    analise ? analise.resultado?.toString() ?? analise.valorfinal : 'Por analisar',
+	  ];
+	});
 
-  autoTable(doc, {
-    startY: 108,
-    head: [['Elemento', 'Custo', 'Resultado da análise', 'Valor']],
-    body: tableData,
-    theme: 'grid',
-    styles: { fontSize: 9 },
-    headStyles: {
-      fillColor: [41, 128, 185],
-      textColor: 255,
-      fontStyle: 'bold',
-    },
-    alternateRowStyles: { fillColor: [245, 245, 245] },
-  });
+	autoTable(doc, {
+	  startY: 108,
+	  head: [['Elemento', 'Custo em MZN', 'Resultado da análise']],
+	  body: tableData,
+	  theme: 'grid',
+	  styles: { fontSize: 9 },
+	  headStyles: {
+	    fillColor: [41, 128, 185],
+	    textColor: 255,
+	    fontStyle: 'bold',
+	  },
+	  alternateRowStyles: { fillColor: [245, 245, 245] },
+	});
 
   const finalY = (doc as any).lastAutoTable.finalY || 200;
 
