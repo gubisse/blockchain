@@ -2,6 +2,7 @@ import { $ } from "@builder.io/qwik";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { Cliente, Proforma, Parametro, Analise } from "./entidade";
+import { elementosQuimicos118 } from "./dado";
 
 /**
  * Gera um relatório em PDF a partir de uma lista genérica de dados
@@ -49,30 +50,103 @@ type DadosParaRelatorio = {
   analises: Analise[];
 };
 
-export const relatorioEmPDF2 = $(
-  ({ dado, titulo }: { dado: DadosParaRelatorio; titulo?: string }) => {
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text(titulo || "Relatório", 20, 20); // evitar erro TS2345
+export const relatorioEmPDF2 = ({
+  dado,
+  titulo = 'Relatório de Análise',
+}: {
+  dado: DadosParaRelatorio;
+  titulo?: string;
+}) => {
+  const doc = new jsPDF();
 
+  // Header: Logo e Informações da Empresa
+  try {
+    doc.addImage('logo.png', 'PNG', 10, 10, 40, 20);
+  } catch (e) {
     doc.setFontSize(12);
-    doc.text(`Cliente: ${dado.cliente.nome}`, 20, 40);
-    doc.text(`Proforma: ${dado.proforma.nome}`, 20, 50);
-    doc.text(`Data: ${dado.proforma.data}`, 20, 60);
-    doc.text("Parâmetros:", 20, 70);
-
-    let y = 80;
-
-    dado.parametros.forEach((param: any) => {
-      doc.text(
-        `${param.id} (${param.id}): ${param.valorfinal || "Por analisar"} (Valor: ${param.valor} MZN)`,
-        20,
-        y
-      );
-      y += 10;
-    });
-
-    doc.text(`Total pago: ${dado.proforma.totalpagar}`, 20, y + 10);
-    doc.save("relatorio_.pdf");
+    doc.text('LOGO', 10, 20);
   }
-);
+
+  doc.setFontSize(14);
+  doc.setTextColor(40);
+  doc.text('xAI Analytics', 120, 15);
+  doc.setFontSize(10);
+  doc.text('Av. das Empresas, Chimoio, Moçambique', 120, 22);
+  doc.text('Email: contact@xaianalytics.com', 120, 27);
+  doc.text('Telefone: +258 123 456 789', 120, 32);
+
+  // Linha separadora
+  doc.setLineWidth(0.5);
+  doc.line(10, 38, 200, 38);
+
+  // Título do Relatório
+  doc.setFontSize(16);
+  doc.setTextColor(0);
+  doc.text(titulo, 105, 48, { align: 'center' });
+
+  // Informações do Cliente
+  doc.setFontSize(12);
+  doc.text('Detalhes do Cliente', 10, 60);
+  doc.setFontSize(10);
+  doc.text(`Nome: ${dado.cliente.nome || 'N/A'}`, 10, 68);
+  doc.text(`Telefone: ${dado.cliente.telefone || 'N/A'}`, 10, 74);
+  doc.text(`Email: ${dado.cliente.email || 'N/A'}`, 10, 80);
+  doc.text(`Morada: ${dado.cliente.morada || 'N/A'}`, 10, 86);
+
+  // Informações da Proforma
+  doc.setFontSize(12);
+  doc.text('Detalhes da Proforma', 150, 60);
+  doc.setFontSize(10);
+  doc.text(`Nome: ${dado.proforma.nome || 'N/A'}`, 150, 68);
+  doc.text(`Data: ${dado.proforma.data || 'N/A'}`, 150, 74);
+  doc.text(`Estado: ${dado.proforma.estado || 'N/A'}`, 150, 80);
+  doc.text(`Total pago: ${dado.proforma.totalpagar || 0} MZN`, 150, 86);
+
+  // Parâmetros e Resultados
+  doc.setFontSize(12);
+  doc.text('Parâmetros Analisados', 10, 100);
+
+  const parametrosSelecionados = dado.proforma?.parametros
+    ?.split(',')
+    .map((pid) => elementosQuimicos118.find((p) => p.id === pid.trim()))
+    .filter((p): p is Parametro => !!p) || [];
+
+  const tableData = parametrosSelecionados.map((param) => {
+    const analise = dado.analises.find(
+      (a) => a.parametro === param.id && a.proforma === dado.proforma?.id
+    );
+
+    return [
+      param.id+" - "+param.nome,
+      dado.parametros.find((d)=> d.id === param.id)?.valor,
+      analise ? analise.valorfinal.toString() : 'Por analisar',
+      `${param.valorfinal} MZN`,
+    ];
+  });
+
+  autoTable(doc, {
+    startY: 108,
+    head: [['Elemento', 'Custo', 'Resultado da analise']],
+    body: tableData,
+    theme: 'grid',
+    styles: { fontSize: 9 },
+    headStyles: {
+      fillColor: [41, 128, 185],
+      textColor: 255,
+      fontStyle: 'bold',
+    },
+    alternateRowStyles: { fillColor: [245, 245, 245] },
+  });
+
+  const finalY = (doc as any).lastAutoTable.finalY || 200;
+
+  // Assinatura
+  doc.setFontSize(12);
+  doc.text('Assinatura do Técnico Responsável', 10, finalY + 20);
+  doc.setFontSize(10);
+  doc.text('_____________________________', 10, finalY + 30);
+  doc.text('Nome: [Nome do Emissor]', 10, finalY + 37);
+
+  // Salvar o PDF
+  doc.save(`${dado.proforma.id || 'relatorio'}.pdf`);
+};
