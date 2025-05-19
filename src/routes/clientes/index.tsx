@@ -467,15 +467,17 @@ return (
                         <>
                           <p class="text-sm italic text-red-600 mt-3">Ainda sem comprovativo registrado.</p>
 
-                          <form preventdefault:submit onSubmit$={(e) => addComprovativo(e, c?.id)} class="mt-2 space-y-2">
-                            <label class="flex items-center space-x-2 text-sm">
-                              <input type="checkbox" required class="border" />
-                              <span>Confirmar pagamento</span>
-                            </label>
-                            <button type="submit" class="bg-blue-600 text-white text-sm px-3 py-1 rounded hover:bg-blue-700">
-                              Registrar Comprovativo
-                            </button>
-                          </form>
+                          {c?.id && (
+                            <form preventdefault:submit onSubmit$={(e) => addComprovativo(e, c.id)} class="mt-2 space-y-2">
+                              <label class="flex items-center space-x-2 text-sm">
+                                <input type="checkbox" required class="border" />
+                                <span>Confirmar pagamento</span>
+                              </label>
+                              <button type="submit" class="bg-blue-600 text-white text-sm px-3 py-1 rounded hover:bg-blue-700">
+                                Registrar Comprovativo
+                              </button>
+                            </form>
+                          )}
 
                         </>
 

@@ -9,7 +9,7 @@ export default component$(() => {
 
   // Verifica o login no lado do cliente
   useVisibleTask$(() => {
-    logado.value = VerificarLogin();
+    logado.value = await VerificarLogin();
   });
 
   // Função para logout

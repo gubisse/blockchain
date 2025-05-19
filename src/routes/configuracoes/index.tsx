@@ -120,7 +120,6 @@ export default component$(() => {
     const novoParametro: Parametro = {
       id: id || crypto.randomUUID(),
       categoria,
-      nome,
       valor: Number(valor),
       campos,
       formula,
@@ -157,7 +156,6 @@ export default component$(() => {
       state.form = {
         id: parametro.id,
         categoria: parametro.categoria,
-        nome: parametro.nome,
         valor: parametro.valor,
         campos: parametro.campos,
         formula: parametro.formula,
@@ -271,13 +269,18 @@ export default component$(() => {
 
               <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700">Nome</label>
-                <select name="nome" value={state.form.elementosQuimicos118} class="border p-2 rounded w-full" onChange$={(e) => state.form.elementosQuimicos118 = (e.target as HTMLInputElement).value}>
+                <select name="nome" value={state.form.id} class="border p-2 rounded w-full" onChange$={(e) => state.form.id = (e.target as HTMLInputElement).value}>
                   <option disabled selected>Selecione categoria</option>
-                  {[...new Set(elementosQuimicos118.sort((a,b) => b-a).map((d) => d))].map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.nome}
-                    </option>
+                  {[
+                    ...new Map(elementosQuimicos118.map((item) => [item.id, item])).values()
+                  ]
+                    .sort((a, b) => a.nome.localeCompare(b.nome))
+                    .map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.nome}
+                      </option>
                   ))}
+
                 </select>
               </div>
               <div class="mb-4">

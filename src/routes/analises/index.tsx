@@ -384,8 +384,8 @@ const state = useStore<{
                 </div>
                 <button
                   onClick$={() => {
-                    state.dadosParaRelatorio.cliente = state.clientes.find((c) => c.id === isSelected.value?.cliente) || [];
-                    state.dadosParaRelatorio.proforma = isSelected.value || [];
+                    state.dadosParaRelatorio.cliente = state.clientes.find((c) => c.id === isSelected.value?.cliente) || {};
+                    state.dadosParaRelatorio.proforma = isSelected.value || {};
                     state.dadosParaRelatorio.parametros = state.parametros;
                     state.dadosParaRelatorio.analises = state.analises;
                     gerarRelatorioPDF();
