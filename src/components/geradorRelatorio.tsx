@@ -1,6 +1,7 @@
 import { $ } from "@builder.io/qwik";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import type { Cliente, Proforma, Parametro, Analise } from "./entidade";
 
 /**
  * Gera um relatório em PDF a partir de uma lista genérica de dados
@@ -39,8 +40,19 @@ export const relatorioEmPDF = $(
     doc.save(`${nomeArquivo}_${data}.pdf`);
   }
 );
+
+
+type DadosParaRelatorio = {
+  cliente: Partial<Cliente>;
+  proforma: Partial<Proforma>;
+  parametros: Parametro[];
+  analises: Analise[];
+};
+
 export const relatorioEmPDF2 = $(
-  ({ dado, titulo }: { dado: any; titulo?: string }) => {
+  ({ dado, titulo }: { dado: DadosParaRelatorio; titulo?: string }) => {
+
+  	console.log(dado)
     const doc = new jsPDF();
     doc.setFontSize(16);
     doc.text(titulo || "Relatório", 20, 20); // evitar erro TS2345
@@ -55,7 +67,7 @@ export const relatorioEmPDF2 = $(
 
     dado.parametros.forEach((param: any) => {
       doc.text(
-        `${param.nome} (${param.id}): ${param.valorfinal || "Por analisar"} (Valor: ${param.valor} MZN)`,
+        `${param.id} (${param.id}): ${param.valorfinal || "Por analisar"} (Valor: ${param.valor} MZN)`,
         20,
         y
       );

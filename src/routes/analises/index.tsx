@@ -193,8 +193,7 @@ const state = useStore<{
     }
     
     relatorioEmPDF2({
-
-      dado: [state.dadosParaRelatorio],
+      dado: state.dadosParaRelatorio,
       titulo: "Relatório de Escolas",
     });
   });
