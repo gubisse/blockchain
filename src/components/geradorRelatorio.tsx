@@ -51,8 +51,6 @@ type DadosParaRelatorio = {
 
 export const relatorioEmPDF2 = $(
   ({ dado, titulo }: { dado: DadosParaRelatorio; titulo?: string }) => {
-
-  	console.log(dado)
     const doc = new jsPDF();
     doc.setFontSize(16);
     doc.text(titulo || "Relatório", 20, 20); // evitar erro TS2345
