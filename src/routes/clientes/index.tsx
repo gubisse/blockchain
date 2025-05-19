@@ -467,8 +467,8 @@ return (
                         <>
                           <p class="text-sm italic text-red-600 mt-3">Ainda sem comprovativo registrado.</p>
 
-                          {c?.id && (
-                            <form preventdefault:submit onSubmit$={(e) => addComprovativo(e, c.id)} class="mt-2 space-y-2">
+                          {c?.id ? (
+                            <form preventdefault:submit onSubmit$={(e) => addComprovativo(e, c.id as string)} class="mt-2 space-y-2">
                               <label class="flex items-center space-x-2 text-sm">
                                 <input type="checkbox" required class="border" />
                                 <span>Confirmar pagamento</span>
@@ -477,6 +477,8 @@ return (
                                 Registrar Comprovativo
                               </button>
                             </form>
+                          ) : (
+                            <p class="text-sm italic text-red-600 mt-3">Ainda sem comprovativo registrado.</p>
                           )}
 
                         </>

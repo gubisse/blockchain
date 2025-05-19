@@ -30,7 +30,6 @@ export default component$(() => {
     form: {
       id?: string;
       categoria: string;
-      nome: string;
       valor: number;
       campos: string;
       formula: string;
@@ -43,7 +42,6 @@ export default component$(() => {
     analises: [],
     form: {
       categoria: "",
-      nome: "",
       valor: 0,
       campos: "",
       formula: "",
@@ -194,7 +192,7 @@ export default component$(() => {
           <button
             class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             onClick$={() => {
-              state.form = { categoria: "", nome: "", valor: 0, campos: "", formula: "", testValues: {}, testResult: "" };
+              state.form = { categoria: "", valor: 0, campos: "", formula: "", testValues: {}, testResult: "" };
               editingParametro.value = null;
               isModalOpen.value = true;
             }}
