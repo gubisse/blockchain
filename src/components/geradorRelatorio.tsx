@@ -109,7 +109,7 @@ export const relatorioEmPDF2 = ({
   const parametrosSelecionados = dado.proforma?.parametros
     ?.split(',')
     .map((pid) => elementosQuimicos118.find((p) => p.id === pid.trim()))
-    .filter((p): p is ElementosQuimicos118 => !!p) || [];
+    .filter((p): p is Parametro => !!p) || [];
 
   const tableData = parametrosSelecionados.map((param) => {
     const analise = dado.analises.find(
