@@ -39,30 +39,30 @@ export const relatorioEmPDF = $(
     doc.save(`${nomeArquivo}_${data}.pdf`);
   }
 );
-
 export const relatorioEmPDF2 = $(
-  ({ dado, titulo }: { dado: any[]; titulo?: string }) => {
-  const doc = new jsPDF();
-  doc.setFontSize(16);
-  doc.text(titulo, 20, 20);
-  
-  doc.setFontSize(12);
-  doc.text(`Cliente: ${dado.cliente.nome}`, 20, 40);
-  doc.text(`Proforma: ${dado.proforma.nome}`, 20, 50);
-  doc.text(`Data: ${dado.proforma.data}`, 20, 60);
-  doc.text("Parâmetros:", 20, 70);
+  ({ dado, titulo }: { dado: any; titulo?: string }) => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text(titulo || "Relatório", 20, 20); // evitar erro TS2345
 
-  let y = 80;
+    doc.setFontSize(12);
+    doc.text(`Cliente: ${dado.cliente.nome}`, 20, 40);
+    doc.text(`Proforma: ${dado.proforma.nome}`, 20, 50);
+    doc.text(`Data: ${dado.proforma.data}`, 20, 60);
+    doc.text("Parâmetros:", 20, 70);
 
-  dado.parametros.forEach((param) => {
-    doc.text(
-      `${param.nome} (${param.id}): ${param.valorfinal} (Valor: ${param.valor} MZN)`,
-      20,
-      y
-    );
-    y += 10;
-  });
+    let y = 80;
 
-  doc.text(`Total pago: ${dado.proforma.totalpagar}`, 20, y + 10);
-  doc.save("relatorio_.pdf");
-});
+    dado.parametros.forEach((param: any) => {
+      doc.text(
+        `${param.nome} (${param.id}): ${param.valorfinal || "Por analisar"} (Valor: ${param.valor} MZN)`,
+        20,
+        y
+      );
+      y += 10;
+    });
+
+    doc.text(`Total pago: ${dado.proforma.totalpagar}`, 20, y + 10);
+    doc.save("relatorio_.pdf");
+  }
+);

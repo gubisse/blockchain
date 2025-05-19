@@ -1,4 +1,4 @@
-import { $ } from '@builder.io/qwik';
+import { $, type QRL } from '@builder.io/qwik';
 import md5 from 'blueimp-md5'; 
 
 import jsPDF from 'jspdf';
@@ -49,10 +49,6 @@ export const TerminarLogin = $(() => {
   return true;
 });
 
-
-import { $, type QRL } from '@builder.io/qwik';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 export const GerarPDF: QRL<() => void> = $(() => {
   const elementoOriginal = document.getElementById('relatorio-pdf');

@@ -194,7 +194,7 @@ const state = useStore<{
     
     relatorioEmPDF2({
 
-      dado: state.dadosParaRelatorio,
+      dado: [state.dadosParaRelatorio],
       titulo: "Relatório de Escolas",
     });
   });
@@ -245,7 +245,7 @@ const state = useStore<{
               </option>
               {state.parametrosEs.map((d) => (
                 <option key={d.id} value={d.id}>
-                  {d.nome}
+                  {d.id}
                 </option>
               ))}
             </select>
@@ -355,12 +355,12 @@ const state = useStore<{
                     <strong>Parâmetros:</strong>
                   </p>
                   <div class="grid grid-cols-3 gap-2 mt-2">
-                    {isSelected.value.parametros.split(',').map((pid) => {
+                    {isSelected.value?.parametros?.split(',').map((pid) => {
                       const parametro = elementosQuimicos118.find(p => p.id === pid.trim());
                       return parametro ? (
                         <div
                           class={`border p-2 rounded ${
-                            state.analises.find((d) => d.parametro === parametro.id && d.proforma === isSelected.value.id)?.valorfinal
+                            state.analises.find((d) => d.parametro === parametro.id && d.proforma === isSelected.value?.id)?.valorfinal
                               ? 'bg-green-100'
                               : 'bg-red-50'
                           }`}
@@ -369,7 +369,7 @@ const state = useStore<{
                           <p class="text-sm font-semibold">{parametro.nome}</p>
                           <p class="text-xs text-gray-600">{parametro.id}</p>
                           <p class="text-xs text-gray-600">{state.parametros.find((d)=> d.id === parametro.id)?.valor} MZN</p>
-                          <p class="text-xs text-gray-600">{state.analises.find((d)=> d.parametro === parametro.id && d.proforma === isSelected.value.id )?.valorfinal || "Por analisar"}</p>
+                          <p class="text-xs text-gray-600">{state.analises.find((d)=> d.parametro === parametro.id && d.proforma === isSelected.value?.id )?.valorfinal || "Por analisar"}</p>
                         </div>
                       ) : (
                         <div class="border p-2 rounded bg-red-100" key={pid}>

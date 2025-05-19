@@ -32,7 +32,6 @@ export interface elementosQuimicos118 {
 export interface Parametro {
   id: string;
   categoria: string;
-  elementosQuimicos118: string;
   valor: number;
   campos: string;
   formula: string;
