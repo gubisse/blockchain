@@ -108,9 +108,9 @@ export default component$(() => {
   // Função para salvar ou atualizar parâmetro
   const salvarParametro = $(async (e: Event) => {
     e.preventDefault();
-    const { id, categoria, nome, valor, campos, formula } = state.form;
+    const { id, categoria, valor, campos, formula } = state.form;
 
-    if (!categoria || !nome || !valor || !campos || !formula ) {
+    if (!categoria || !valor || !campos || !formula ) {
       erro.value = "Todos os campos são obrigatórios";
       return;
     }
@@ -137,7 +137,7 @@ export default component$(() => {
     }
 
     // Reseta formulário e fecha modal
-    state.form = { categoria: "", nome: "", valor: 0, campos: "", formula: "", testValues: {}, testResult: "" };
+    state.form = { categoria: "", valor: 0, campos: "", formula: "", testValues: {}, testResult: "" };
     isModalOpen.value = false;
     editingParametro.value = null;
     erro.value = "";
@@ -243,7 +243,7 @@ export default component$(() => {
               class="absolute top-2 right-2 text-gray-600 hover:text-black"
               onClick$={() => {
                 isModalOpen.value = false;
-                state.form = { categoria: "", nome: "", valor: 0, campos: "", formula: "", testValues: {}, testResult: "" };
+                state.form = { categoria: "", valor: 0, campos: "", formula: "", testValues: {}, testResult: "" };
                 editingParametro.value = null;
               }}
             >
@@ -257,9 +257,9 @@ export default component$(() => {
                 <label class="block text-sm font-medium text-gray-700">Categoria</label>
                 <select name="nome" value={state.form.categoria} class="border p-2 rounded w-full" onChange$={(e) => state.form.categoria = (e.target as HTMLInputElement).value}>
                   <option disabled selected>Selecione categoria</option>
-                  {[...new Set(state.parametros.map((d) => d.categoria))].map((nome) => (
-                    <option key={nome} value={nome}>
-                      {nome}
+                  {[...new Set(state.parametros.map((d) => d.categoria))].map((id) => (
+                    <option key={id} value={id}>
+                      {id}
                     </option>
                   ))}
                 </select>
