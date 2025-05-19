@@ -23,7 +23,7 @@ export interface Proforma {
   estado: string;
 }
 
-export interface elementosQuimicos118 {
+export interface ElementosQuimicos118 {
   id: string;
   nome: string;
   descricao:string;

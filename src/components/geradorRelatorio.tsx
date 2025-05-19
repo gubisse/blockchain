@@ -1,7 +1,7 @@
 import { $ } from "@builder.io/qwik";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import type { Cliente, Proforma, Parametro, Analise } from "./entidade";
+import type { Cliente, Proforma, Parametro, Analise, ElementosQuimicos118 } from "./entidade";
 import { elementosQuimicos118 } from "./dado";
 
 /**
@@ -109,7 +109,7 @@ export const relatorioEmPDF2 = ({
   const parametrosSelecionados = dado.proforma?.parametros
     ?.split(',')
     .map((pid) => elementosQuimicos118.find((p) => p.id === pid.trim()))
-    .filter((p): p is Parametro => !!p) || [];
+    .filter((p): p is ElementosQuimicos118 => !!p) || [];
 
   const tableData = parametrosSelecionados.map((param) => {
     const analise = dado.analises.find(
@@ -148,5 +148,9 @@ export const relatorioEmPDF2 = ({
   doc.text('Nome: [Nome do Emissor]', 10, finalY + 37);
 
   // Salvar o PDF
-  doc.save(`${dado.proforma.id || 'relatorio'}.pdf`);
+  const dataStr = new Date().toISOString().slice(0,19).replace(/:/g, '-'); 
+	// Ex: "2025-05-19T14-30-00"
+
+	doc.save(`${dado.cliente.nome || 'relatorio'}_${dataStr}.pdf`);
+
 };
