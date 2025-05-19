@@ -1,8 +1,8 @@
 import md5 from 'blueimp-md5';
 
 export const usuarios = [
-	{ id: 'u001', nome: 'admin', senha: md5('1234') },
-  	{ id: 'u002', nome: 'diretor', senha: md5('senha123') },	
+	{ id: "u001", nome: "admin", senha: md5("1234") },
+	{ id: "u002", nome: "diretor", senha: md5("senha123") },
 ]
 export const clientes = [
 	{id: "c1", nome: "Antonio Miguel Antonio", telefone: "845421639", email: "e@gmail.com", morada: "Bairro 5 Chimoio", data: "2025-02-02 00:00"},

@@ -2,7 +2,7 @@ import { component$, useSignal, useStore, $, useTask$ } from "@builder.io/qwik";
 import { Header } from "~/components/Header";
 import { Footer } from "~/components/Footer";
 import type { Parametro, Proforma, Analise } from "~/components/entidade";
-import { clientes, parametros, proformas, analises, elementosQuimicos118 } from "~/components/dado";
+import { parametros, proformas, analises, elementosQuimicos118 } from "~/components/dado";
 
 // Função para avaliar expressões matemáticas simples
 const evaluateExpression = (expression: string): number => {

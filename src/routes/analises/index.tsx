@@ -3,7 +3,7 @@ import { Header } from "~/components/Header";
 import { Footer } from "~/components/Footer";
 import type { Cliente, Proforma, Parametro, Analise } from "~/components/entidade";
 import { clientes, parametros, proformas, analises, elementosQuimicos118 } from "~/components/dado";
-import { relatorioEmPDF, relatorioEmPDF2  } from "~/components/geradorRelatorio";
+import { relatorioEmPDF2  } from "~/components/geradorRelatorio";
 
 // Função para avaliar expressões matemáticas simples
 const evaluateExpression = (expression: string): number => {
