@@ -186,7 +186,7 @@ export default component$(() => {
       p.parametros?.split(",").includes(parametro)
     );
 
-    if (!parametroNaAnalise) {
+    if ( p && !parametroNaAnalise) {
       state.form = {
         id: p.id,
         categoria: p.categoria ?? "",
@@ -408,7 +408,7 @@ export default component$(() => {
                   <button
                     class="text-sm text-blue-600 hover:underline disabled:opacity-50"
                     disabled={carregando.value}
-                    onClick$={() => editarParametro(parametro.id)}
+                    onClick$={() => editarParametro(parametro?.id || "N/A")}
                   >
                     Editar
                   </button>
