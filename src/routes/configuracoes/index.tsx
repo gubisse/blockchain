@@ -149,7 +149,7 @@ export default component$(() => {
       let action = addPAction
       if(isSelected.value){ 
         action = editPAction
-        dados.id=isSelected.value.id;
+        dados.id = isSelected!.value!.id || "";
       }
       const response = await action.submit(dados as Record<string, unknown>);
 
