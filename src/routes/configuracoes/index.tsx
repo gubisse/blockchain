@@ -178,7 +178,7 @@ export default component$(() => {
     }
   });
 
-  const editarParametro = $((parametro: Parametro) => {
+  const editarParametro = $((parametro: any) => {
     const parametroNaAnalise = state.proformas.some(p => 
       p.parametros?.split(",").includes(parametro.id)
     );
