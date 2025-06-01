@@ -141,7 +141,7 @@ export default component$(() => {
     if(isActiveModalCliente.value === null ){
       r= await addCAction.submit(dados as unknown as Record<string, unknown>);
     }else if( isActiveModalCliente.value === "editarc" ){
-      dados.id = isSelectedCliente?.value?.id;
+      dados.id = isSelectedCliente!.value!.id;
       r= await editCAction.submit(dados as unknown as Record<string, unknown>);
     }
       
@@ -182,7 +182,7 @@ export default component$(() => {
     console.log(isActiveModalCliente.value)
 
     let r: any; 
-    dados.cliente = isSelectedCliente?.value?.id;
+    dados.cliente = isSelectedCliente!.value!.id;
     dados.estado = "Pendente";
     dados.data = new Date().toISOString();
 
@@ -268,7 +268,20 @@ return (
             <input type="text" name="telefone" placeholder="Telefone" required class="border p-2 rounded" />
             <input type="email" name="email" placeholder="Email" required class="border p-2 rounded" />
             <input type="text" name="morada" placeholder="Morada" required class="border p-2 rounded" />
-            <input type="datetime-local" value={new Date().toISOString('pt-PT').slice(0, 16)} name="data" placeholder="Data" required class="border p-2 rounded" />
+            <input
+              type="datetime-local"
+              value={new Date().toLocaleString('pt-PT', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+              }).replace(', ', 'T').slice(0, 16)}
+              name="data"
+              placeholder="Data"
+              required
+              class="border p-2 rounded"
+            />
           </div>
           <div class="mt-4 text-right">
             <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
