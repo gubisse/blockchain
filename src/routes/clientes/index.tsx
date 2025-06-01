@@ -195,7 +195,7 @@ export default component$(() => {
       
     form.reset();
     isSelectedCliente.value = null;
-    isActiveModalCliente.value = false;
+    isActiveModalCliente.value = null;
     carregando.value = false;
     
     if(r?.value?.success){
