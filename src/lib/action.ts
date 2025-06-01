@@ -32,6 +32,39 @@ export function createAddProformaAction<T extends { id: string; nome: string }>(
   });
 }
 
+export function createAddComprovativoAction<T extends { id: string; nome: string }>(collectionName: string) {
+  return routeAction$(async (form: JSONObject, { fail }) => {
+    try {
+      if (!form.proforma) { return fail(400, { message: `Proforma é obrigatório para adicionar ${collectionName}.` }); }
+      if (!form.data) { return fail(400, { message: `Data é obrigatório para adicionar ${collectionName}.` }); }
+      
+      const dado = form as T;
+      await addDado(collectionName, dado);
+      return { success: true, message: `${collectionName} adicionado com sucesso.`, dado };
+    } catch (error) {
+      return fail(500, { message: `Erro interno ao salvar ${collectionName}: ${error}` });
+    }
+  });
+}
+
+export function createAddParametroAction<T extends { id: string}>(collectionName: string) {
+  return routeAction$(async (form: JSONObject, { fail }) => {
+    try {
+      if (!form.id) { return fail(400, { message: `ID é obrigatório para adicionar ${collectionName}.` }); }
+      if (!form.categoria) { return fail(400, { message: `Categoria é obrigatório para adicionar ${collectionName}.` }); }
+      if (!form.valor) { return fail(400, { message: `Valor é obrigatório para adicionar ${collectionName}.` }); }
+      if (!form.campos) { return fail(400, { message: `Campos é obrigatório para adicionar ${collectionName}.` }); }
+      if (!form.formula) { return fail(400, { message: `Formula é obrigatório para adicionar ${collectionName}.` }); }
+      
+      const dado = form as T;
+      await addDado(collectionName, dado);
+      return { success: true, message: `${collectionName} adicionado com sucesso.`, dado };
+    } catch (error) {
+      return fail(500, { message: `Erro interno ao salvar ${collectionName}: ${error}` });
+    }
+  });
+}
+
 
 export function createEditClienteAction<T extends { id: string }>(collectionName: string) {
   return routeAction$(async (form: JSONObject, { fail }) => {
@@ -61,6 +94,23 @@ export function createEditProformaAction<T extends { id: string; nome: string }>
       await updateDado(collectionName, dado.id, {
         nome: dado.nome.trim(),
       });
+      return { success: true, message: `${collectionName} editado com sucesso.`, dado };
+    } catch (error) {
+      return fail(500, { message: `Erro interno ao editar ${collectionName}: ${error}` });
+    }
+  });
+}
+export function createEditParametroAction<T extends { id: string }>(collectionName: string) {
+  return routeAction$(async (form: JSONObject, { fail }) => {
+    try {
+      if (!form || !form.id || typeof form.id !== 'string') {
+        return fail(400, { message: `ID é obrigatório para editar ${collectionName}.` });
+      }
+
+      const dado = form as T;
+
+      await updateDado(collectionName, dado.id, dado);
+
       return { success: true, message: `${collectionName} editado com sucesso.`, dado };
     } catch (error) {
       return fail(500, { message: `Erro interno ao editar ${collectionName}: ${error}` });

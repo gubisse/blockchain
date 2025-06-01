@@ -115,9 +115,9 @@ export const GerarPDF: QRL<() => void> = $(() => {
 export const formatarDataHora = (iso: string | undefined | null) => {
   if (!iso) return 'Data inválida';
   const data = new Date(iso);
+  console.log(iso)
   if (isNaN(data.getTime())) return 'Data inválida';
-  
-  return data.toLocaleString('pt-PT', {
+  return data.toLocaleString('pt-MZ', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -126,3 +126,15 @@ export const formatarDataHora = (iso: string | undefined | null) => {
   }).replace(',', '');
 };
 
+// Função para avaliar expressões matemáticas simples
+export const evaluateExpression = (expression: string): number => {
+  try {
+    // Substitui variáveis por valores e avalia a expressão
+    // Suporta operações básicas: +, -, *, /
+    const safeEval = new Function(`return ${expression}`);
+    const result = safeEval();
+    return Number.isFinite(result) ? Number(result.toFixed(2)) : NaN;
+  } catch (error) {
+    return NaN;
+  }
+};

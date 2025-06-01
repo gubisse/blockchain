@@ -3,18 +3,21 @@ import { routeLoader$ } from '@builder.io/qwik-city';
 import { Header } from "~/components/Header";
 import { Footer } from "~/components/Footer";
 import type { Cliente, Proforma, Parametro, Comprovativo } from "~/components/entidade";
-import { parametros, comprovativos, elementosQuimicos118 } from "~/components/dado";
+import { elementosQuimicos118 } from "~/components/dado";
 import { getAllDados } from "~/components/DTO";
 import { formatarDataHora } from "~/components/util";
-import { createAddClienteAction, createEditClienteAction, createAddProformaAction } from '~/lib/action';
+import { createAddClienteAction, createEditClienteAction, createAddProformaAction, createAddComprovativoAction } from '~/lib/action';
 
 export const useGetClientes = routeLoader$(async () => getAllDados<Cliente>('cliente'));
 export const useGetProformas = routeLoader$(async () => getAllDados<Proforma>('proforma'));
+export const useGetParametros = routeLoader$(async () => getAllDados<Parametro>('parametro'));
+export const useGetComprovativos = routeLoader$(async () => getAllDados<Comprovativo>('comprovativo'));
 
-// Export specific add actions
 export const useAddCliente = createAddClienteAction<Cliente>("cliente")
-export const useEditCliente = createEditClienteAction<Cliente>("cliente")
 export const useAddProforma = createAddProformaAction<Proforma>("proforma")
+export const useAddComprovativo = createAddComprovativoAction<Comprovativo>("comprovativo")
+
+export const useEditCliente = createEditClienteAction<Cliente>("cliente")
 
 export default component$(() => {
   
@@ -26,10 +29,12 @@ export default component$(() => {
 
   const clientesLoader = useGetClientes();
   const proformasLoader = useGetProformas();
+  const comprovativosLoader = useGetComprovativos();
+  const parametrosLoader = useGetParametros();
   
   const addCAction = useAddCliente();
   const addPAction = useAddProforma();
-  
+  const addCPAction = useAddComprovativo();
   const editCAction = useEditCliente();
 
   const state = useStore<{
@@ -69,13 +74,13 @@ export default component$(() => {
     // Rastreia mudanças no clientesLoader
     track(() => clientesLoader.value);
     track(() => proformasLoader.value);
+    track(() => comprovativosLoader.value);
 
     // Atribui os valores ao estado
     state.clientes = await clientesLoader.value;
     state.proformas = await proformasLoader.value;
-    state.parametros = parametros;
-    state.comprovativos = comprovativos;
-    console.log(state.clientes);
+    state.comprovativos = await comprovativosLoader.value;
+    state.parametros = await parametrosLoader.value;
   })
 
   useTask$(({ track }) => {
@@ -168,8 +173,6 @@ export default component$(() => {
       state.mensagem  = "";
       state.erro = r?.value?.message;
     }
-
-
   });
   const addProforma = $(async (e: Event) => {
 
@@ -207,34 +210,38 @@ export default component$(() => {
 
   });
 
-  const addComprovativo = $((e: Event, proformaId: string) => {
+  const addComprovativo = $( async (e: Event, proformaId: string) => {
+
+    carregando.value = true;
+
     e.preventDefault();
     const form = e.target as HTMLFormElement;
-
-    if (!isSelectedCliente.value) {
-      state.erro = "Por favor, selecione um cliente!";
-      return;
-    }
+    const dados = Object.fromEntries(new FormData(form).entries());
 
     const now = new Date();
     const dataFormatada = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-    const novo: Comprovativo = {
-      id: String(state.comprovativos.length + 1),
-      proforma: proformaId,
-      data: dataFormatada, // ✅ agora está no formato desejado
-    };
+    dados.proforma = proformaId || "";
+    dados.data = dataFormatada;
 
-    state.comprovativos.push(novo);
-
-    console.log("Comprovativo salvo:", novo);
-
+    const r = await addCPAction.submit(dados as unknown as Record<string, unknown>);
+      
     form.reset();
     isSelectedCliente.value = null;
     isActiveModalCliente.value = null;
-    state.form.proforma = {};
-    state.mensagem = "Comprovativo salvo com sucesso!";
-    state.erro = "";
+    carregando.value = false;
+    
+    if(r?.value?.success){
+
+      state.mensagem = r?.value?.message;
+      state.erro = "";
+    
+      state.proformas.push(dados);
+
+    }else{
+      state.mensagem  = "";
+      state.erro = r?.value?.message;
+    }
   });
 
 
@@ -243,16 +250,6 @@ export default component$(() => {
 return (
     <>
       <Header />
-
-      {/* Full-screen loading overlay */}
-      {carregando.value && (
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div class="bg-white p-8 rounded-2xl shadow-lg text-center w-full max-w-md">
-            <p class="text-gray-600 mb-6">Trabalhando...</p>
-            <div class="animate-spin rounded-full h-10 w-10 border-t-4 border-blue-500 border-solid mx-auto"></div>
-          </div>
-        </div>
-      )}
 
       <main class="p-4 max-w-screen-lg mx-auto mt-10">
         <h2 class="text-lg font-semibold uppercase">Cadastro do cliente</h2>
@@ -402,7 +399,7 @@ return (
       {/* Modal */}
       {isActiveModalCliente.value && (
         <div class="fixed inset-0 bg-black bg-opacity-40 z-50 flex justify-center items-start overflow-y-auto">
-          <div class="bg-white p-6 mt-10 rounded-xl shadow-xl w-full max-w-md relative max-h-[90vh] overflow-y-auto">
+          <div class="bg-white p-6 mt-10 rounded-xl shadow-xl w-full max-w-xl relative max-h-[90vh] overflow-y-auto">
             <button
               class="absolute top-2 right-2 text-gray-600 hover:text-black"
               onClick$={() => isActiveModalCliente.value = null}
