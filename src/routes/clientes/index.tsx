@@ -1,10 +1,10 @@
 import { component$, useSignal, useStore, $, useTask$ } from "@builder.io/qwik";
-import { routeLoader$, routeAction$, type JSONObject } from '@builder.io/qwik-city';
+import { routeLoader$ } from '@builder.io/qwik-city';
 import { Header } from "~/components/Header";
 import { Footer } from "~/components/Footer";
 import type { Cliente, Proforma, Parametro, Comprovativo } from "~/components/entidade";
-import { clientes, parametros, proformas, comprovativos, elementosQuimicos118 } from "~/components/dado";
-import { getAllDados, addDado, updateDado } from "~/components/DTO";
+import { parametros, comprovativos, elementosQuimicos118 } from "~/components/dado";
+import { getAllDados } from "~/components/DTO";
 import { formatarDataHora } from "~/components/util";
 import { createAddClienteAction, createEditClienteAction, createAddProformaAction } from '~/lib/action';
 
@@ -181,12 +181,11 @@ export default component$(() => {
 
     console.log(isActiveModalCliente.value)
 
-    let r: any; 
     dados.cliente = isSelectedCliente!.value!.id || "";
     dados.estado = "Pendente";
     dados.data = new Date().toISOString();
 
-    r= await addPAction.submit(dados as unknown as Record<string, unknown>);
+    const r = await addPAction.submit(dados as unknown as Record<string, unknown>);
       
     form.reset();
     isSelectedCliente.value = null;
