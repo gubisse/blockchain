@@ -141,7 +141,7 @@ export default component$(() => {
     if(isActiveModalCliente.value === null ){
       r= await addCAction.submit(dados as unknown as Record<string, unknown>);
     }else if( isActiveModalCliente.value === "editarc" ){
-      dados.id = isSelectedCliente!.value!.id;
+      dados.id = isSelectedCliente!.value!.id || "";
       r= await editCAction.submit(dados as unknown as Record<string, unknown>);
     }
       
@@ -182,7 +182,7 @@ export default component$(() => {
     console.log(isActiveModalCliente.value)
 
     let r: any; 
-    dados.cliente = isSelectedCliente!.value!.id;
+    dados.cliente = isSelectedCliente!.value!.id || "";
     dados.estado = "Pendente";
     dados.data = new Date().toISOString();
 
