@@ -141,13 +141,13 @@ export default component$(() => {
     if(isActiveModalCliente.value === null ){
       r= await addCAction.submit(dados as unknown as Record<string, unknown>);
     }else if( isActiveModalCliente.value === "editarc" ){
-      dados.id = isSelectedCliente.value.id;
+      dados.id = isSelectedCliente?.value?.id;
       r= await editCAction.submit(dados as unknown as Record<string, unknown>);
     }
       
     form.reset();
     isSelectedCliente.value = null;
-    isActiveModalCliente.value = false;
+    isActiveModalCliente.value = null;
     carregando.value = false;
     
     if(r?.value?.success){
@@ -182,16 +182,11 @@ export default component$(() => {
     console.log(isActiveModalCliente.value)
 
     let r: any; 
-    if(isActiveModalCliente.value === "novop" ){
-      dados.cliente = isSelectedCliente.value?.id?.trim();
-      dados.estado = "Pendente";
-      dados.data = new Date().toISOString();
+    dados.cliente = isSelectedCliente?.value?.id;
+    dados.estado = "Pendente";
+    dados.data = new Date().toISOString();
 
-      r= await addPAction.submit(dados as unknown as Record<string, unknown>);
-    }else if( isActiveModalCliente.value === "editarp" ){
-      dados.id = isSelectedCliente.value.id;
-      r= await editCAction.submit(dados as unknown as Record<string, unknown>);
-    }
+    r= await addPAction.submit(dados as unknown as Record<string, unknown>);
       
     form.reset();
     isSelectedCliente.value = null;
@@ -283,7 +278,7 @@ return (
         </form>
 
         <div class="flex justify-between items-center mb-3">
-          <h2 class="text-lg font-semibold uppercase"><span class="text-blue-700">{state.clientes.length}</span> Clientes Cadastrados</h2>
+          <h2 class="text-lg font-semibold uppercase"><span class="text-blue-700">{""+state.clientes.length}</span> Clientes Cadastrados</h2>
           <button
             class="text-sm text-blue-700 underline"
             onClick$={() => (visualizacaoTabela.value = !visualizacaoTabela.value)}
