@@ -32,7 +32,7 @@ export function createAddProformaAction<T extends { id: string; nome: string }>(
   });
 }
 
-export function createAddComprovativoAction<T extends { id: string; nome: string }>(collectionName: string) {
+export function createAddComprovativoAction<T extends { id: string }>(collectionName: string) {
   return routeAction$(async (form: JSONObject, { fail }) => {
     try {
       if (!form.proforma) { return fail(400, { message: `Proforma é obrigatório para adicionar ${collectionName}.` }); }
