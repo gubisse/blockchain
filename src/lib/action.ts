@@ -1,0 +1,89 @@
+import { routeAction$, type JSONObject } from '@builder.io/qwik-city';
+import { addDado, updateDado } from '~/components/DTO';
+import type { Cliente, Proforma } from '~/components/entidade';
+
+// Factory function to create an add action for a given collection
+export function createAddClienteAction<T extends { id: string; nome: string }>(collectionName: string) {
+  return routeAction$(async (form: JSONObject, { fail }) => {
+    try {
+      if (!form || !form.nome || typeof form.nome !== 'string') {
+        return fail(400, { message: `Nome é obrigatório para adicionar ${collectionName}.` });
+      }
+      const dado = form as T;
+      await addDado(collectionName, dado);
+      return { success: true, message: `${collectionName} adicionado com sucesso.`, dado };
+    } catch (error) {
+      return fail(500, { message: `Erro interno ao salvar ${collectionName}: ${error}` });
+    }
+  });
+}
+export function createAddProformaAction<T extends { id: string; nome: string }>(collectionName: string) {
+  return routeAction$(async (form: JSONObject, { fail }) => {
+    try {
+      if (!form || !form.nome || typeof form.nome !== 'string') {
+        return fail(400, { message: `Nome é obrigatório para adicionar ${collectionName}.` });
+      }
+      const dado = form as T;
+      await addDado(collectionName, dado);
+      return { success: true, message: `${collectionName} adicionado com sucesso.`, dado };
+    } catch (error) {
+      return fail(500, { message: `Erro interno ao salvar ${collectionName}: ${error}` });
+    }
+  });
+}
+
+
+export function createEditClienteAction<T extends { id: string }>(collectionName: string) {
+  return routeAction$(async (form: JSONObject, { fail }) => {
+    try {
+      if (!form || !form.id || typeof form.id !== 'string') {
+        return fail(400, { message: `ID é obrigatório para editar ${collectionName}.` });
+      }
+
+      const dado = form as T;
+
+      await updateDado(collectionName, dado.id, dado);
+
+      return { success: true, message: `${collectionName} editado com sucesso.`, dado };
+    } catch (error) {
+      return fail(500, { message: `Erro interno ao editar ${collectionName}: ${error}` });
+    }
+  });
+}
+
+export function createEditProformaAction<T extends { id: string; nome: string }>(collectionName: string) {
+  return routeAction$(async (form: JSONObject, { fail }) => {
+    try {
+      if (!form || !form.id || !form.nome || typeof form.nome !== 'string') {
+        return fail(400, { message: `ID e nome são obrigatórios para editar ${collectionName}.` });
+      }
+      const dado = form as T;
+      await updateDado(collectionName, dado.id, {
+        nome: dado.nome.trim(),
+      });
+      return { success: true, message: `${collectionName} editado com sucesso.`, dado };
+    } catch (error) {
+      return fail(500, { message: `Erro interno ao editar ${collectionName}: ${error}` });
+    }
+  });
+}
+
+/*export const useAddCliente = routeAction$(async (form: JSONObject, { fail }) => {
+  try {
+    const dado = form as unknown as Cliente;
+    await addDado("clientes", dado);
+    return { success: true, message: "Adicionado com sucesso.", dado };
+  } catch (error) {
+    return fail(500, { message: `Erro interno ao salvar: ${error}` });
+  }
+});
+
+export const useAddProforma = routeAction$(async (form: JSONObject, { fail }) => {
+  try {
+    const dado = form as unknown as Proforma;
+    await addDado("clientes", dado);
+    return { success: true, message: "Adicionado com sucesso.", dado };
+  } catch (error) {
+    return fail(500, { message: `Erro interno ao salvar: ${error}` });
+  }
+});*/

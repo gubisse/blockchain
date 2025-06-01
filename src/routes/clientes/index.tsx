@@ -1,8 +1,20 @@
 import { component$, useSignal, useStore, $, useTask$ } from "@builder.io/qwik";
+import { routeLoader$, routeAction$, type JSONObject } from '@builder.io/qwik-city';
 import { Header } from "~/components/Header";
 import { Footer } from "~/components/Footer";
 import type { Cliente, Proforma, Parametro, Comprovativo } from "~/components/entidade";
 import { clientes, parametros, proformas, comprovativos, elementosQuimicos118 } from "~/components/dado";
+import { getAllDados, addDado, updateDado } from "~/components/DTO";
+import { formatarDataHora } from "~/components/util";
+import { createAddClienteAction, createEditClienteAction, createAddProformaAction } from '~/lib/action';
+
+export const useGetClientes = routeLoader$(async () => getAllDados<Cliente>('cliente'));
+export const useGetProformas = routeLoader$(async () => getAllDados<Proforma>('proforma'));
+
+// Export specific add actions
+export const useAddCliente = createAddClienteAction<Cliente>("cliente")
+export const useEditCliente = createEditClienteAction<Cliente>("cliente")
+export const useAddProforma = createAddProformaAction<Proforma>("proforma")
 
 export default component$(() => {
   
@@ -11,7 +23,14 @@ export default component$(() => {
 
   const isActiveModalCliente = useSignal<null | 'novop' | 'editarc' | 'proformas'>(null);
   const isSelectedCliente = useSignal<Partial<Cliente> | null>(null);
+
+  const clientesLoader = useGetClientes();
+  const proformasLoader = useGetProformas();
   
+  const addCAction = useAddCliente();
+  const addPAction = useAddProforma();
+  
+  const editCAction = useEditCliente();
 
   const state = useStore<{
     clientes: Partial<Cliente>[];
@@ -45,11 +64,18 @@ export default component$(() => {
     mensagem: "",
   });
 
-  useTask$(() => {
-    state.clientes = clientes;
+  // Tarefa para inicializar o estado
+  useTask$(async ({ track }) => {
+    // Rastreia mudanças no clientesLoader
+    track(() => clientesLoader.value);
+    track(() => proformasLoader.value);
+
+    // Atribui os valores ao estado
+    state.clientes = await clientesLoader.value;
+    state.proformas = await proformasLoader.value;
     state.parametros = parametros;
-    state.proformas = proformas;
     state.comprovativos = comprovativos;
+    console.log(state.clientes);
   })
 
   useTask$(({ track }) => {
@@ -67,6 +93,14 @@ export default component$(() => {
       setTimeout(() => {
         state.erro = "";
       }, 6000);
+    }
+  });
+  useTask$(({ track }) => {
+    track(() => state.form.proforma.nome);
+    if (state.form.proforma.nome) {
+      state.parametrosSelecionados = [];      
+      state.form.proforma.parametros = ""
+      state.form.proforma.totalpagar = 0
     }
   });
 
@@ -94,71 +128,89 @@ export default component$(() => {
 
 
 
+  const salvarCliente = $(async (e: Event) => {
+    carregando.value = true;
 
-  const addCliente = $((e: Event) => {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
     const dados = Object.fromEntries(new FormData(form).entries());
 
-    state.clientes.push({
-      nome: dados.nome as string,
-      telefone: dados.telefone as string,
-      email: dados.email as string,
-      morada: dados.morada as string,
-      data: dados.data as string,
-    });
+    console.log(isActiveModalCliente.value)
 
+    let r: any; 
+    if(isActiveModalCliente.value === null ){
+      r= await addCAction.submit(dados as unknown as Record<string, unknown>);
+    }else if( isActiveModalCliente.value === "editarc" ){
+      dados.id = isSelectedCliente.value.id;
+      r= await editCAction.submit(dados as unknown as Record<string, unknown>);
+    }
+      
     form.reset();
-    state.mensagem = "Cliente salvo com sucesso!";
+    isSelectedCliente.value = null;
+    isActiveModalCliente.value = false;
+    carregando.value = false;
+    
+    if(r?.value?.success){
+
+      state.mensagem = r?.value?.message;
+      state.erro = "";
+    
+      state.clientes.push({
+        nome: dados.nome as string,
+        telefone: dados.telefone as string,
+        email: dados.email as string,
+        morada: dados.morada as string,
+        data: dados.data as string,
+
+      });
+
+    }else{
+      state.mensagem  = "";
+      state.erro = r?.value?.message;
+    }
+
+
   });
-  const addProforma = $((e: Event) => {
+  const addProforma = $(async (e: Event) => {
+
+    carregando.value = true;
+
     e.preventDefault();
     const form = e.target as HTMLFormElement;
+    const dados = Object.fromEntries(new FormData(form).entries());
 
-    // Verificando se o cliente foi selecionado
-    if (!isSelectedCliente.value) {
-      state.erro = "Por favor, selecione um cliente!";
-      return;
+    console.log(isActiveModalCliente.value)
+
+    let r: any; 
+    if(isActiveModalCliente.value === "novop" ){
+      dados.cliente = isSelectedCliente.value?.id?.trim();
+      dados.estado = "Pendente";
+      dados.data = new Date().toISOString();
+
+      r= await addPAction.submit(dados as unknown as Record<string, unknown>);
+    }else if( isActiveModalCliente.value === "editarp" ){
+      dados.id = isSelectedCliente.value.id;
+      r= await editCAction.submit(dados as unknown as Record<string, unknown>);
+    }
+      
+    form.reset();
+    isSelectedCliente.value = null;
+    isActiveModalCliente.value = false;
+    carregando.value = false;
+    
+    if(r?.value?.success){
+
+      state.mensagem = r?.value?.message;
+      state.erro = "";
+    
+      state.proformas.push(dados);
+
+    }else{
+      state.mensagem  = "";
+      state.erro = r?.value?.message;
     }
 
-    // Verificando se o nome, parâmetros e total a pagar estão corretos
-    if (!state.form.proforma.nome?.trim()) {
-      state.erro = "O nome da proforma não pode ser vazio!";
-      return;
-    }
 
-    if (!state.form.proforma.parametros?.trim()) {
-      state.erro = "Os parâmetros não podem ser vazios!";
-      return;
-    }
-
-    if (Number(state.form.proforma.totalpagar) <= 0) {
-      state.erro = "O valor total a pagar deve ser maior que zero!";
-      return;
-    }
-
-    const novaProforma: Proforma = {
-      cliente: isSelectedCliente.value?.id?.trim() as string,
-      nome: state.form.proforma.nome as string,
-      parametros: state.form.proforma.parametros as string,
-      totalpagar: +(state.form.proforma.totalpagar ?? "0"),
-      estado: "Pendente",
-      data: new Date().toISOString(),
-      id: String(state.proformas.length + 1),
-    };
-
-
-    // Salvando a proforma
-    state.proformas.push(novaProforma);
-
-    console.log("Proforma salva:", novaProforma); // Log da nova proforma
-
-    form.reset(); // Resetando o formulário
-    isSelectedCliente.value = null; 
-    isActiveModalCliente.value = null; 
-    state.form.proforma = {};
-    state.mensagem = "Proforma salva com sucesso!"; // Exibindo a mensagem de sucesso
-    state.erro = ""; // Limpando qualquer erro anterior
   });
 
   const addComprovativo = $((e: Event, proformaId: string) => {
@@ -198,10 +250,11 @@ return (
     <>
       <Header />
 
+      {/* Full-screen loading overlay */}
       {carregando.value && (
-        <div class="p-4 max-w-screen-lg mx-auto flex min-h-screen items-center justify-center bg-gray-100">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div class="bg-white p-8 rounded-2xl shadow-lg text-center w-full max-w-md">
-            <p class="text-gray-600 mb-6">Estamos carregando seu ambiente personalizado...</p>
+            <p class="text-gray-600 mb-6">Trabalhando...</p>
             <div class="animate-spin rounded-full h-10 w-10 border-t-4 border-blue-500 border-solid mx-auto"></div>
           </div>
         </div>
@@ -212,7 +265,7 @@ return (
 
         <form
           preventdefault:submit
-          onSubmit$={addCliente}
+          onSubmit$={salvarCliente}
           class="bg-white p-4 rounded-xl shadow mb-6"
         >
           <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -220,7 +273,7 @@ return (
             <input type="text" name="telefone" placeholder="Telefone" required class="border p-2 rounded" />
             <input type="email" name="email" placeholder="Email" required class="border p-2 rounded" />
             <input type="text" name="morada" placeholder="Morada" required class="border p-2 rounded" />
-            <input type="datetime-local" value={new Date().toISOString().slice(0, 16)} name="data" placeholder="Data" required class="border p-2 rounded" />
+            <input type="datetime-local" value={new Date().toISOString('pt-PT').slice(0, 16)} name="data" placeholder="Data" required class="border p-2 rounded" />
           </div>
           <div class="mt-4 text-right">
             <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
@@ -230,7 +283,7 @@ return (
         </form>
 
         <div class="flex justify-between items-center mb-3">
-          <h2 class="text-lg font-semibold uppercase">Clientes Cadastrados</h2>
+          <h2 class="text-lg font-semibold uppercase"><span class="text-blue-700">{state.clientes.length}</span> Clientes Cadastrados</h2>
           <button
             class="text-sm text-blue-700 underline"
             onClick$={() => (visualizacaoTabela.value = !visualizacaoTabela.value)}
@@ -258,7 +311,7 @@ return (
                     <td class="p-2 border-b">{c.telefone}</td>
                     <td class="p-2 border-b">{c.email}</td>
                     <td class="p-2 border-b">{c.morada}</td>
-                    <td class="p-2 border-b">{c.data}</td>
+                    <td class="p-2 border-b">{formatarDataHora(c.data)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -272,7 +325,7 @@ return (
                 <p class="text-sm"><strong>Telefone:</strong> {c.telefone}</p>
                 <p class="text-sm"><strong>Email:</strong> {c.email}</p>
                 <p class="text-sm"><strong>Morada:</strong> {c.morada}</p>
-                <p class="text-sm"><strong>Data:</strong> {c.data}</p>
+                <p class="text-sm"><strong>Data:</strong> {formatarDataHora(c.data)}</p>
                 <div class="flex justify-between items-center mt-3">
                   <button
                     class="bg-yellow-500 text-white px-3 py-1 rounded text-sm hover:bg-yellow-600"
@@ -281,26 +334,50 @@ return (
                       state.form.cliente = c;
                       isActiveModalCliente.value = "editarc";
                     }}
-                  >
-                    Editar
+                  >                    
+                    <img
+                      src="/public/cliente.png" // Substitua pelo caminho da sua imagem
+                      alt="Ícone Proforma"
+                      class="w-10 h-10" // Ajuste o tamanho conforme necessário
+                    />
                   </button>
                   <button
-                    class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                    class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 flex items-center gap-2"
                     onClick$={() => {
                       isSelectedCliente.value = c;
                       isActiveModalCliente.value = "novop";
                     }}
                   >
-                    + Proforma
+                    <img
+                      src="/public/save-proforma.png" // Substitua pelo caminho da sua imagem
+                      alt="Ícone Proforma"
+                      class="w-10 h-10" // Ajuste o tamanho conforme necessário
+                    />
                   </button>
                   <button
-                    class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                    class="flex bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
                     onClick$={() => {
                       isSelectedCliente.value = c;
                       isActiveModalCliente.value = "proformas";
                     }}
                   >
-                    Proformas {state.proformas.filter((d) => d.cliente === c.id)?.length}
+                    <img
+                      src="/public/lista-proformas.png" // Substitua pelo caminho da sua imagem
+                      alt="Ícone Proforma"
+                      class="w-10 h-10" // Ajuste o tamanho conforme necessário
+                    /> {state.proformas.filter((d) => d.cliente === c.id)?.length}
+                  </button>
+                  <button
+                    class="bg-red-900 text-white px-3 py-1 rounded text-sm hover:bg-red-700 flex items-center gap-2"
+                    onClick$={() => {
+                      state.erro = "Nao e possivel eliminar o cliente, vai contra as norma."
+                    }}
+                  >
+                    <img
+                      src="/public/deletar.png" // Substitua pelo caminho da sua imagem
+                      alt="Ícone Proforma"
+                      class="w-10 h-10" // Ajuste o tamanho conforme necessário
+                    />
                   </button>
                 </div>
               </div>
@@ -334,7 +411,7 @@ return (
                   onSubmit$={addProforma}
                   class="bg-white p-4 rounded-xl shadow mb-6"
                 >
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="grid grid-cols-1 md:grid-cols-1 gap-4 mb-2">
                     <select name="nome" value={state.form.proforma.nome} class="border p-2 rounded" onChange$={(e) => state.form.proforma.nome = (e.target as HTMLInputElement).value}>
                       <option disabled selected>Selecione categoria</option>
                       {[...new Set(state.parametros.map((d) => d.categoria))].map((nome) => (
@@ -343,6 +420,9 @@ return (
                         </option>
                       ))}
                     </select>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
 
                     {state.parametros.filter((d) => d.categoria === (state.form.proforma.nome)).map((d) => (
                       <div key={d.id}>
@@ -356,16 +436,21 @@ return (
                         </label>
                       </div>
                     ))}
-
-                    <input name="parametros" value={state.form.proforma.parametros || ""} required class="border p-2 rounded" />
-                    <input name="totalpagar" value={state.form.proforma.totalpagar || 0} required class="border p-2 rounded" />
                   </div>
 
-                  <div class="mt-4 text-right">
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                      Salvar
-                    </button>
+                  <div class="grid grid-cols-1 md:grid-cols-1 gap-4 mt-2">
+                    <input name="parametros" value={state.form.proforma.parametros || "[ <elementos quimicos> ]"} required class="border p-2 rounded" readOnly />
+                    <input name="totalpagar" value={state.form.proforma.totalpagar || "[ <valor a pagar> ]"} required class="border p-2 rounded" readOnly/>
                   </div>
+
+                  {state.form.proforma.parametros &&
+
+                    <div class="mt-4 text-right">
+                      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                        Salvar
+                      </button>
+                    </div>
+                  }
                 </form>
               </>
             )}
@@ -374,10 +459,11 @@ return (
             {isActiveModalCliente.value === "editarc" && (
               <>
                 <h2 class="text-lg font-bold mb-4">Editar :: {isSelectedCliente.value?.nome}</h2>
-                <form preventdefault:submit onSubmit$={addCliente}>
+                <form preventdefault:submit onSubmit$={salvarCliente}>
                   <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700">Nome</label>
                     <input
+                      name="nome"
                       type="text"
                       class="border p-2 rounded w-full"
                       value={isSelectedCliente.value?.nome}
@@ -388,6 +474,7 @@ return (
                   <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700">Telefone</label>
                     <input
+                      name="telefone"
                       type="text"
                       class="border p-2 rounded w-full"
                       value={isSelectedCliente.value?.telefone}
@@ -398,6 +485,7 @@ return (
                   <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700">Email</label>
                     <input
+                      name="email"
                       type="email"
                       class="border p-2 rounded w-full"
                       value={isSelectedCliente.value?.email}
@@ -408,6 +496,7 @@ return (
                   <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700">Morada</label>
                     <input
+                      name="morada"
                       type="text"
                       class="border p-2 rounded w-full"
                       value={isSelectedCliente.value?.morada}
@@ -415,16 +504,10 @@ return (
                       required
                     />
                   </div>  
-                  <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700">Data</label>
-                    <input
-                      type="datetime-local"
-                      class="border p-2 rounded w-full"
-                      value={isSelectedCliente.value?.data}
-                      onInput$={(e) => (state.form.cliente.data = (e.target as HTMLInputElement).value)}
-                      required
-                    />
-                  </div>
+                  
+                  <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    Salvar
+                  </button>
                 </form>
               </>
             )}
@@ -455,12 +538,12 @@ return (
                       </div>
 
                       <p class="text-sm"><strong>Total:</strong> {c.totalpagar}</p>
-                      <p class="text-sm"><strong>Data:</strong> {c.data}</p>
+                      <p class="text-sm"><strong>Data:</strong> {formatarDataHora(c.data)}</p>
                       {state.comprovativos.find(d => d.proforma === c.id)?.data ? (
                         <>
                           <p class="text-sm font-bold uppercase mt-3 text-green-600">Comprovada</p>
                           <p class="text-sm">
-                            <strong>Data:</strong> {state.comprovativos.find(d => d.proforma === c.id)?.data}
+                            <strong>Data:</strong> {formatarDataHora(state.comprovativos.find(d => d.proforma === c.id)?.data)}
                           </p>
                         </>
                       ) : (
@@ -490,6 +573,23 @@ return (
                   ))}
                 </div>
               </>
+            )}
+          </div>
+        </div>
+      )}
+
+
+      {/* Modal de Mensagem */}
+      {carregando.value && (
+        <div class="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
+          <div class="bg-green-100 border border-green-400 text-green-800 px-6 py-4 rounded shadow-xl max-w-sm text-center relative">
+            {carregando.value && (
+              <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                <div class="bg-white p-8 rounded-2xl shadow-lg text-center w-full max-w-md">
+                  <p class="text-gray-600 mb-6">Trabalhando...</p>
+                  <div class="animate-spin rounded-full h-10 w-10 border-t-4 border-blue-500 border-solid mx-auto"></div>
+                </div>
+              </div>
             )}
           </div>
         </div>
