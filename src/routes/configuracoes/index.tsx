@@ -178,20 +178,23 @@ export default component$(() => {
     }
   });
 
-  const editarParametro = $((parametro: any) => {
+  const editarParametro = $((parametro: string) => {
+
+    const p = state.parametros.find(d => d.id === parametro);
+
     const parametroNaAnalise = state.proformas.some(p => 
-      p.parametros?.split(",").includes(parametro.id)
+      p.parametros?.split(",").includes(parametro)
     );
 
     if (!parametroNaAnalise) {
       state.form = {
-        id: parametro.id,
-        categoria: parametro.categoria ?? "",
-        valor: parametro.valor ?? 0,
-        campos: parametro.campos ?? "",
-        formula: parametro.formula ?? "",
+        id: p.id,
+        categoria: p.categoria ?? "",
+        valor: p.valor ?? 0,
+        campos: p.campos ?? "",
+        formula: p.formula ?? "",
         teste: {
-          valores: parametro.campos?.split(",")
+          valores: p.campos?.split(",")
             .map(c => c.trim())
             .filter(Boolean)
             .reduce((acc, campo) => ({ ...acc, [campo]: 0 }), {}) ?? {},
@@ -200,7 +203,7 @@ export default component$(() => {
         erro: "",
         mensagem: "",
       };
-      isSelected.value = parametro;
+      isSelected.value = p;
       state.erro = "";
     } else {
       state.erro = "Não é possível editar este parâmetro, pois ele já está vinculado a uma operação em proformas.";
@@ -405,7 +408,7 @@ export default component$(() => {
                   <button
                     class="text-sm text-blue-600 hover:underline disabled:opacity-50"
                     disabled={carregando.value}
-                    onClick$={() => editarParametro(parametro)}
+                    onClick$={() => editarParametro(parametro.id)}
                   >
                     Editar
                   </button>
