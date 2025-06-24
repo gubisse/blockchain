@@ -337,7 +337,7 @@ return (
             <select
               class="border p-2 rounded text-sm"
               onChange$={(e) =>
-                (selectedColumn.value = (e.target as HTMLSelectElement).value as keyof Distrito)
+                (selectedColumn.value = (e.target as HTMLSelectElement).value as keyof Cliente)
               }
             >
               <option value="">Pesquisar por</option>
@@ -453,7 +453,7 @@ return (
           </div>
 
         )}
-        {paginado?.value.length !== 0 && (
+        {paginado?.value?.length !== 0 && (
           <div class="flex justify-center items-center mt-3 gap-3">
             <button
               class="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600"
@@ -474,7 +474,7 @@ return (
             </button>
           </div>
         )}
-        {paginado?.value.length === 0 && (
+        {paginado?.value?.length === 0 && (
           <div class="bg-white border p-4 rounded-xl shadow-sm mt-4">
             <p class="text-sm text-gray-600"><strong>Nenhum cliente cadastrado</strong></p>
           </div>
