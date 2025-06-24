@@ -1,6 +1,7 @@
 // src/components/Header.tsx
 import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 import { AlegarLogin, VerificarLogin, formatarDataMZ } from '~/components/util';
+import type { Usuario } from '~/components/entidade';
 
 
 export const HeaderLogin = component$(() => {
@@ -117,7 +118,7 @@ export const HeaderLogin = component$(() => {
 export const Header = component$(() => {
   const mostrarMenu = useSignal(false);
 
-  const logado = useSignal(false);
+  const logado = useSignal<Usuario | null>(null);
 
   // Verifica o login no lado do cliente
   useVisibleTask$(async () => {

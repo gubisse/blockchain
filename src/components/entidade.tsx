@@ -2,6 +2,7 @@ export interface Usuario {
   id: string;
   nome: string;
   senha: string; // já em md5
+  data?:string;
 }
 
 export interface Cliente {
