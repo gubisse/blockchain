@@ -9,6 +9,20 @@ import { usuarios } from "./dado";
 
 const USUARIOS_FIXOS: Usuario[] = usuarios;
 
+export function formatarDataMZ(isoString: string): string {
+  const data = new Date(isoString);
+  return data.toLocaleString('pt-MZ', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Africa/Maputo',
+  });
+}
+
+
 export const AlegarLogin = $(async (nome: string, senha: string) => {
   const usuario = USUARIOS_FIXOS.find(u => u.nome === nome.trim());
 
@@ -23,7 +37,7 @@ export const AlegarLogin = $(async (nome: string, senha: string) => {
   }
 
   const objetoLogin = {
-    usuario: usuario.id,
+    usuario: usuario,
     data: new Date().toISOString(),
   };
 
@@ -38,7 +52,7 @@ export const VerificarLogin = () => {
 
   try {
     const obj = JSON.parse(login);
-    return obj && obj.usuario;
+    return obj;
   } catch {
     return null;
   }

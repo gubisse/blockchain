@@ -253,138 +253,151 @@ export default component$(() => {
           <h3 class="text-lg font-semibold mb-4 text-gray-700">
             {isSelected.value ? "Editar Parâmetro" : "Adicionar Parâmetro"}
           </h3>
+            
           <form preventdefault:submit onSubmit$={salvarParametro} class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Categoria</label>
-              <select 
-                name="categoria" 
-                value={state.form.categoria} 
-                class="mt-1 border p-2 rounded w-full disabled:opacity-50 focus:ring-2 focus:ring-blue-500" 
-                disabled={carregando.value}
-                onChange$={(e) => state.form.categoria = (e.target as HTMLSelectElement).value}
-                required
-              >
-                <option value="" disabled>Selecione categoria</option>
-                {['Agua', 'Alimento', 'Agua e Alimento'].map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Nome</label>
-              <select 
-                name="id" 
-                value={state.form.id} 
-                class="mt-1 border p-2 rounded w-full disabled:opacity-50 focus:ring-2 focus:ring-blue-500"
-                disabled={carregando.value || !!isSelected.value}
-                onChange$={(e) => state.form.id = (e.target as HTMLSelectElement).value}
-                required
-              >
-                <option value="" disabled>Selecione nome</option>
-                {[...new Map(elementosQuimicos118.map(item => [item.id, item])).values()]
-                  .sort((a, b) => a.nome.localeCompare(b.nome))
-                  .map(d => (
-                    <option key={d.id} value={d.id}>
-                      {d.nome}
-                    </option>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Categoria</label>
+                <select 
+                  name="categoria" 
+                  value={state.form.categoria} 
+                  class="mt-1 border p-2 rounded w-full disabled:opacity-50 focus:ring-2 focus:ring-blue-500" 
+                  disabled={carregando.value}
+                  onChange$={(e) => state.form.categoria = (e.target as HTMLSelectElement).value}
+                  required
+                >
+                  <option value="" disabled>Selecione categoria</option>
+                  {['Agua', 'Alimento', 'Agua e Alimento'].map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
                   ))}
-              </select>
-            </div>
+                </select>
+              </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Valor</label>
-              <input
-                name="valor"
-                type="number"
-                class="mt-1 border p-2 rounded w-full disabled:opacity-50 focus:ring-2 focus:ring-blue-500"
-                value={state.form.valor}
-                onInput$={(e) => state.form.valor = Number((e.target as HTMLInputElement).value)}
-                required
-                disabled={carregando.value}
-              />
-            </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Nome</label>
+                <select 
+                  name="id" 
+                  value={state.form.id} 
+                  class="mt-1 border p-2 rounded w-full disabled:opacity-50 focus:ring-2 focus:ring-blue-500"
+                  disabled={carregando.value || !!isSelected.value}
+                  onChange$={(e) => state.form.id = (e.target as HTMLSelectElement).value}
+                  required
+                >
+                  <option value="" disabled>Selecione nome</option>
+                  {[...new Map(elementosQuimicos118.map(item => [item.id, item])).values()]
+                    .sort((a, b) => a.nome.localeCompare(b.nome))
+                    .map(d => (
+                      <option key={d.id} value={d.id}>
+                        {d.nome}
+                      </option>
+                    ))}
+                </select>
+              </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Campos (ex.: x,y,z)</label>
-              <input
-                name="campos"
-                type="text"
-                class="mt-1 border p-2 rounded w-full disabled:opacity-50 focus:ring-2 focus:ring-blue-500"
-                value={state.form.campos}
-                onInput$={(e) => state.form.campos = (e.target as HTMLInputElement).value}
-                required
-                disabled={carregando.value}
-              />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Fórmula (ex.: x/y)</label>
-              <input
-                name="formula"
-                type="text"
-                class="mt-1 border p-2 rounded w-full disabled:opacity-50 focus:ring-2 focus:ring-blue-500"
-                value={state.form.formula}
-                onInput$={(e) => state.form.formula = (e.target as HTMLInputElement).value}
-                required
-                disabled={carregando.value}
-              />
-            </div>
-
-            {state.form.campos?.split(",").map(c => c.trim()).filter(Boolean).map(campo => (
-              <div key={campo}>
-                <label class="block text-sm font-medium text-gray-700">{`Valor de ${campo}`}</label>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Valor</label>
                 <input
+                  name="valor"
                   type="number"
                   class="mt-1 border p-2 rounded w-full disabled:opacity-50 focus:ring-2 focus:ring-blue-500"
-                  value={state.form.teste.valores[campo] ?? 0}
-                  onInput$={(e) => state.form.teste.valores[campo] = Number((e.target as HTMLInputElement).value)}
+                  value={state.form.valor}
+                  onInput$={(e) => state.form.valor = Number((e.target as HTMLInputElement).value)}
+                  required
                   disabled={carregando.value}
                 />
               </div>
-            ))}
 
-            <div class="flex items-center gap-4">
-              <button
-                type="button"
-                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-                disabled={carregando.value}
-                onClick$={testarFormula}
-              >
-                Testar Fórmula
-              </button>
-              <span class="text-sm text-gray-700">
-                Resultado: {state.form.teste.resultado || "Não testado"}
-              </span>
             </div>
 
-            <div class="flex justify-between gap-4">
-              <button
-                type="button"
-                class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400 disabled:opacity-50"
-                disabled={carregando.value}
-                onClick$={() => {
-                  state.form = {
-                    categoria: "",
-                    valor: 0,
-                    campos: "",
-                    formula: "",
-                    teste: { valores: {}, resultado: "" },
-                    erro: "",
-                    mensagem: "",
-                  };
-                  isSelected.value = null;
-                }}
-              >
-                Limpar
-              </button>
-              <button
-                type="submit"
-                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-                disabled={carregando.value}
-              >
-                {carregando.value ? 'Salvando...' : 'Salvar'}
-              </button>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Campos (ex.: x,y,z)</label>
+                <input
+                  name="campos"
+                  type="text"
+                  class="mt-1 border p-2 rounded w-full disabled:opacity-50 focus:ring-2 focus:ring-blue-500"
+                  value={state.form.campos}
+                  onInput$={(e) => state.form.campos = (e.target as HTMLInputElement).value}
+                  required
+                  disabled={carregando.value}
+                />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Fórmula (ex.: x/y)</label>
+                <input
+                  name="formula"
+                  type="text"
+                  class="mt-1 border p-2 rounded w-full disabled:opacity-50 focus:ring-2 focus:ring-blue-500"
+                  value={state.form.formula}
+                  onInput$={(e) => state.form.formula = (e.target as HTMLInputElement).value}
+                  required
+                  disabled={carregando.value}
+                />
+              </div>
+
+              {state.form.campos?.split(",").map(c => c.trim()).filter(Boolean).map(campo => (
+                <div key={campo}>
+                  <label class="block text-sm font-medium text-gray-700">{`Valor de ${campo}`}</label>
+                  <input
+                    type="number"
+                    class="mt-1 border p-2 rounded w-full disabled:opacity-50 focus:ring-2 focus:ring-blue-500"
+                    value={state.form.teste.valores[campo] ?? 0}
+                    onInput$={(e) => state.form.teste.valores[campo] = Number((e.target as HTMLInputElement).value)}
+                    disabled={carregando.value}
+                  />
+                </div>
+              ))}
+
+              <div class="flex items-center gap-4">
+                <label class="block text-sm font-medium text-gray-700"></label>
+                <button
+                  type="button"
+                  class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+                  disabled={carregando.value}
+                  onClick$={testarFormula}
+                >
+                  Testar Fórmula
+                </button>
+                <span class="text-sm text-gray-700">
+                  Resultado: {state.form.teste.resultado || "Não testado"}
+                </span>
+              </div>
+
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
+
+
+
+              <div class="flex justify-between gap-4">
+                <button
+                  type="button"
+                  class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400 disabled:opacity-50"
+                  disabled={carregando.value}
+                  onClick$={() => {
+                    state.form = {
+                      categoria: "",
+                      valor: 0,
+                      campos: "",
+                      formula: "",
+                      teste: { valores: {}, resultado: "" },
+                      erro: "",
+                      mensagem: "",
+                    };
+                    isSelected.value = null;
+                  }}
+                >
+                  Limpar
+                </button>
+                <button
+                  type="submit"
+                  class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+                  disabled={carregando.value}
+                >
+                  {carregando.value ? 'Salvando...' : 'Salvar'}
+                </button>
+              </div>
             </div>
           </form>
         </div>

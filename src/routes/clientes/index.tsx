@@ -1,4 +1,4 @@
-import { component$, useSignal, useStore, $, useTask$ } from "@builder.io/qwik";
+import { component$, useSignal, useStore, $, useTask$, useComputed$ } from "@builder.io/qwik";
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { Header } from "~/components/Header";
 import { Footer } from "~/components/Footer";
@@ -23,6 +23,11 @@ export default component$(() => {
   
   const carregando = useSignal(false);
   const visualizacaoTabela = useSignal(false);
+
+  const isSearch = useSignal("");
+  const selectedColumn = useSignal<keyof Cliente>("nome");
+  const itemsPerPage = 9;
+  const paginaCorrente = useSignal(1);
 
   const isActiveModalCliente = useSignal<null | 'novop' | 'editarc' | 'proformas'>(null);
   const isSelectedCliente = useSignal<Partial<Cliente> | null>(null);
@@ -245,6 +250,40 @@ export default component$(() => {
   });
 
 
+    // Filtragem e paginação
+  const filtrado = useComputed$(() => {
+    let result = state.clientes;
+    
+    if (isSearch.value) {
+      result = result.filter((dado) => {
+        if(selectedColumn.value === "data"){
+          
+          const value = dado[selectedColumn.value]?.toString().toLowerCase();
+          return formatarDataHora(value)?.includes(isSearch.value.toLowerCase());
+          
+        }else{
+          const value = dado[selectedColumn.value]?.toString().toLowerCase();
+          return value?.includes(isSearch.value.toLowerCase());
+
+        }
+      });
+    }
+    return result;
+  });
+
+
+  const totalPaginas = useComputed$(() => Math.ceil(filtrado.value.length / itemsPerPage));
+  const paginado = useComputed$(() => {
+    const start = (paginaCorrente.value - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    if(filtrado){
+
+      return filtrado?.value?.slice(start, end);
+
+    }
+  });
+
+
 
 
 return (
@@ -286,15 +325,50 @@ return (
           </div>
         </form>
 
-        <div class="flex justify-between items-center mb-3">
-          <h2 class="text-lg font-semibold uppercase"><span class="text-blue-700">{""+state.clientes.length}</span> Clientes Cadastrados</h2>
-          <button
-            class="text-sm text-blue-700 underline"
-            onClick$={() => (visualizacaoTabela.value = !visualizacaoTabela.value)}
-          >
-            {visualizacaoTabela.value ? "Cartões" : "Tabela"}
-          </button>
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-3 gap-4">
+          {/* Título com total de clientes */}
+          <h2 class="text-lg font-semibold uppercase">
+            <span class="text-blue-700">{state.clientes.length}</span> Clientes Cadastrados
+          </h2>
+
+          {/* Filtros e alternância de visualização */}
+          <div class="flex flex-col md:flex-row gap-2 md:gap-4 items-start md:items-center">
+            {/* Seletor de coluna para filtrar */}
+            <select
+              class="border p-2 rounded text-sm"
+              onChange$={(e) =>
+                (selectedColumn.value = (e.target as HTMLSelectElement).value as keyof Distrito)
+              }
+            >
+              <option value="">Pesquisar por</option>
+              <option value="nome">Nome</option>
+              <option value="telefone">Telefone</option>
+              <option value="email">Email</option>
+              <option value="morada">Morada</option>
+              <option value="data">Data</option>
+            </select>
+
+            {/* Campo de pesquisa */}
+            <input
+              type="text"
+              class="border p-2 rounded text-sm"
+              placeholder={selectedColumn.value ? `Procurar por ${selectedColumn.value}...` : "Pesquisar..."}
+              onInput$={(e) => {
+                isSearch.value = (e.target as HTMLInputElement).value;
+                paginaCorrente.value = 1;
+              }}
+            />
+
+            {/* Botão de alternância entre Tabela e Cartões */}
+            <button
+              class="bg-blue-900 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 transition"
+              onClick$={() => (visualizacaoTabela.value = !visualizacaoTabela.value)}
+            >
+              {visualizacaoTabela.value ? "Cartões" : "Tabela"}
+            </button>
+          </div>
         </div>
+
 
         {visualizacaoTabela.value ? (
           <div class="overflow-x-auto">
@@ -309,28 +383,33 @@ return (
                 </tr>
               </thead>
               <tbody>
-                {state.clientes.map((c, i) => (
-                  <tr key={i} class="hover:bg-gray-50 text-sm">
-                    <td class="p-2 border-b">{c.nome}</td>
-                    <td class="p-2 border-b">{c.telefone}</td>
-                    <td class="p-2 border-b">{c.email}</td>
-                    <td class="p-2 border-b">{c.morada}</td>
-                    <td class="p-2 border-b">{formatarDataHora(c.data)}</td>
+                {(paginado?.value ?? [])
+                .map((dado: Cliente, index) => {
+                return (
+                  <tr key={dado.id} class="hover:bg-gray-50 text-sm">
+                    <td class="p-2 border-b">{dado.nome}</td>
+                    <td class="p-2 border-b">{dado.telefone}</td>
+                    <td class="p-2 border-b">{dado.email}</td>
+                    <td class="p-2 border-b">{dado.morada}</td>
+                    <td class="p-2 border-b">{formatarDataHora(dado.data)}</td>
                   </tr>
-                ))}
+                )
+                })}
               </tbody>
             </table>
+            
           </div>
         ) : (
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {state.clientes.map((c, i) => (
-              <div key={i} class="bg-white border p-4 rounded-xl shadow-sm">
+            {(paginado?.value ?? [])
+            .map((c) => (
+              <div key={c.id} class="bg-white border p-4 rounded-xl shadow-sm">
                 <h3 class="text-lg font-bold uppercase">{c.nome}</h3>
                 <p class="text-sm"><strong>Telefone:</strong> {c.telefone}</p>
                 <p class="text-sm"><strong>Email:</strong> {c.email}</p>
                 <p class="text-sm"><strong>Morada:</strong> {c.morada}</p>
                 <p class="text-sm"><strong>Data:</strong> {formatarDataHora(c.data)}</p>
-                <div class="flex justify-between items-center mt-3">
+                <div class="grid gap-1">
                   <button
                     class="bg-yellow-500 text-white px-3 py-1 rounded text-sm hover:bg-yellow-600"
                     onClick$={() => {
@@ -339,57 +418,63 @@ return (
                       isActiveModalCliente.value = "editarc";
                     }}
                   >                    
-                    <img
-                      src="/public/cliente.png" // Substitua pelo caminho da sua imagem
-                      alt="Ícone Proforma"
-                      class="w-10 h-10" // Ajuste o tamanho conforme necessário
-                    />
+                    Editar cliente
                   </button>
                   <button
-                    class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 flex items-center gap-2"
+                    class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
                     onClick$={() => {
                       isSelectedCliente.value = c;
                       isActiveModalCliente.value = "novop";
                     }}
                   >
-                    <img
-                      src="/public/save-proforma.png" // Substitua pelo caminho da sua imagem
-                      alt="Ícone Proforma"
-                      class="w-10 h-10" // Ajuste o tamanho conforme necessário
-                    />
+                    Novo proforma
                   </button>
                   <button
-                    class="flex bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                    class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
                     onClick$={() => {
                       isSelectedCliente.value = c;
                       isActiveModalCliente.value = "proformas";
                     }}
                   >
-                    <img
-                      src="/public/lista-proformas.png" // Substitua pelo caminho da sua imagem
-                      alt="Ícone Proforma"
-                      class="w-10 h-10" // Ajuste o tamanho conforme necessário
-                    /> {state.proformas.filter((d) => d.cliente === c.id)?.length}
+                    {"Listar proformas <<" + state.proformas.filter((d) => d.cliente === c.id)?.length+">>"}
                   </button>
                   <button
-                    class="bg-red-900 text-white px-3 py-1 rounded text-sm hover:bg-red-700 flex items-center gap-2"
+                    class="bg-red-900 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
                     onClick$={() => {
                       state.erro = "Nao e possivel eliminar o cliente, vai contra as norma."
                     }}
                   >
-                    <img
-                      src="/public/deletar.png" // Substitua pelo caminho da sua imagem
-                      alt="Ícone Proforma"
-                      class="w-10 h-10" // Ajuste o tamanho conforme necessário
-                    />
+                    Deletar proforma
                   </button>
                 </div>
               </div>
             ))}
+
+          </div>
+
+        )}
+        {paginado?.value.length !== 0 && (
+          <div class="flex justify-center items-center mt-3 gap-3">
+            <button
+              class="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600"
+              onClick$={() => (paginaCorrente.value = Math.max(1, paginaCorrente.value - 1))}
+              disabled={paginaCorrente.value === 1}
+            >
+              Anterior
+            </button>
+            <span>
+              {paginaCorrente.value} de {totalPaginas.value}
+            </span>
+            <button
+              class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600"
+              onClick$={() => (paginaCorrente.value = Math.min(totalPaginas.value, paginaCorrente.value + 1))}
+              disabled={paginaCorrente.value === totalPaginas.value}
+            >
+              Próxima
+            </button>
           </div>
         )}
-
-        {state.clientes.length === 0 && (
+        {paginado?.value.length === 0 && (
           <div class="bg-white border p-4 rounded-xl shadow-sm mt-4">
             <p class="text-sm text-gray-600"><strong>Nenhum cliente cadastrado</strong></p>
           </div>

@@ -203,7 +203,7 @@ const state = useStore<{
 
   return (
     <>
-      <Header />
+      <Header/>
       {carregando.value && (
         <div class="p-4 max-w-screen-lg mx-auto flex min-h-screen items-center justify-center bg-gray-100">
           <div class="bg-white p-8 rounded-2xl shadow-lg text-center w-full max-w-md">

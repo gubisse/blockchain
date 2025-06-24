@@ -1,6 +1,7 @@
 // src/components/Header.tsx
 import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
-import { AlegarLogin } from '~/components/util';
+import { AlegarLogin, VerificarLogin, formatarDataMZ } from '~/components/util';
+
 
 export const HeaderLogin = component$(() => {
   const mostrarMenu = useSignal(false);
@@ -116,9 +117,17 @@ export const HeaderLogin = component$(() => {
 export const Header = component$(() => {
   const mostrarMenu = useSignal(false);
 
+  const logado = useSignal(false);
+
+  // Verifica o login no lado do cliente
+  useVisibleTask$(async () => {
+    logado.value = await VerificarLogin();
+  });
+
   return (
     <header class="bg-blue-600 text-white shadow px-4 py-3 fixed top-0 w-full z-50 flex justify-between items-center">
       <h1 class="text-sm font-bold">Plataforma Blockchain</h1>
+      <h1 class="text-sm font-bold">{"Data e hora do acesso: " + formatarDataMZ(logado.value.data)}</h1>
 
       {/* Dropdown de Ações */}
       <div class="relative">
@@ -130,7 +139,8 @@ export const Header = component$(() => {
         </button>
 
         {mostrarMenu.value && (
-          <ul class="absolute right-0 mt-2 bg-white text-black shadow rounded w-40 text-sm z-50">
+          <ul class="absolute right-0 mt-2 bg-white text-black shadow rounded w-50 text-sm z-50">
+            
             <li>
               <a href="/clientes" class="block px-4 py-2 hover:bg-gray-100">
                 Clientes
