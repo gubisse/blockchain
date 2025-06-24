@@ -384,8 +384,7 @@ return (
               </thead>
               <tbody>
                 {(paginado?.value ?? [])
-                .map((dado: Cliente, index) => {
-                return (
+                .map((dado) => (
                   <tr key={dado.id} class="hover:bg-gray-50 text-sm">
                     <td class="p-2 border-b">{dado.nome}</td>
                     <td class="p-2 border-b">{dado.telefone}</td>
@@ -393,8 +392,7 @@ return (
                     <td class="p-2 border-b">{dado.morada}</td>
                     <td class="p-2 border-b">{formatarDataHora(dado.data)}</td>
                   </tr>
-                )
-                })}
+                ))}
               </tbody>
             </table>
             

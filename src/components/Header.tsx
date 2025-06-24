@@ -127,7 +127,7 @@ export const Header = component$(() => {
   return (
     <header class="bg-blue-600 text-white shadow px-4 py-3 fixed top-0 w-full z-50 flex justify-between items-center">
       <h1 class="text-sm font-bold">Plataforma Blockchain</h1>
-      <h1 class="text-sm font-bold">{"Data e hora do acesso: " + formatarDataMZ(logado.value.data)}</h1>
+      <h1 class="text-sm font-bold">{"Data e hora do acesso: " + formatarDataMZ(logado?.value?.data)}</h1>
 
       {/* Dropdown de Ações */}
       <div class="relative">
