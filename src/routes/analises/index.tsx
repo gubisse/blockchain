@@ -135,6 +135,7 @@ export default component$(() => {
       state.parametrosEs = proforma.parametros
         .split(",")
         .map((param) => state.parametros.find((p) => p.id === param))
+        .filter(Boolean); // remove undefined
 
       // Não encontrados
       state.parametrosNaoEncontrados = proforma.parametros
@@ -176,19 +177,26 @@ export default component$(() => {
     }
   });
 
-
   const calcular = $(() => {
-    if (Object.keys(state.form.analise).length > 0) {
-      state.valores = state.camposNecessarios.map((campo) => `${campo}: ${state.form.analise[campo] ?? "0"}`);
+    if (Object.keys(state.form.analise.campos || {}).length > 0) {
+      // Exibir os valores que serão usados na fórmula
+      state.valores = state.camposNecessarios.map(
+        (campo) => `${campo}: ${state.form.analise.campos[campo] ?? "0"}`
+      );
+
       const parametroSelecionado = state.form.parametro;
       if (parametroSelecionado?.formula) {
         let formula = parametroSelecionado.formula;
+
+        // Substitui os campos na fórmula com os valores preenchidos
         state.camposNecessarios.forEach((campo) => {
-          const valor = Number(state.form.analise[campo]) || 0;
+          const valor = Number(state.form.analise.campos[campo]) || 0;
           const regex = new RegExp(`\\b${campo}\\b`, "g");
           formula = formula.replace(regex, valor.toString());
         });
+
         state.formulaPreenchida = formula;
+
         const resultado = evaluateExpression(formula);
         if (Number.isFinite(resultado)) {
           state.formulaPreenchida = resultado;
@@ -200,6 +208,7 @@ export default component$(() => {
       }
     }
   });
+
 
   const addAnalise = $( async (e: Event) => {
     e.preventDefault();
