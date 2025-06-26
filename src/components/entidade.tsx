@@ -44,7 +44,7 @@ export interface Analise {
   parametro: string;
   valorfinal: number;
   data: string;
-  [key: string]: string | number; // Para campos dinâmicos como x, y, z
+  campos: { [key: string]: string | number };
 }
 export interface Comprovativo {
   id: string;

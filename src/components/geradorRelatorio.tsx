@@ -3,6 +3,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { Cliente, Proforma, Parametro, Analise } from "./entidade";
 import { elementosQuimicos118 } from "./dado";
+import { formatarDataMZ } from "./util";
 
 export const relatorioEmPDF = $(
   ({ dado, titulo }: { dado: any[]; titulo?: string }) => {
@@ -46,7 +47,9 @@ interface ParametroCompleto extends Parametro {
   descricao: string;
 }
 
-export const relatorioEmPDF2 = ({
+
+
+export const relatorioEmPDF2 = async ({
   dado,
   titulo = 'Relatório de Análise',
 }: {
@@ -55,20 +58,35 @@ export const relatorioEmPDF2 = ({
 }) => {
   const doc = new jsPDF();
 
+  // ✅ Carrega logo dinamicamente do public/imagens/logo.png
   try {
-    doc.addImage('logo.png', 'PNG', 10, 10, 40, 20);
+    const logoUrl = '/imagens/ucm.png'; // Caminho relativo ao `public/`
+    const response = await fetch(logoUrl);
+    const blob = await response.blob();
+
+    const reader = new FileReader();
+    const imageData: string = await new Promise((resolve, reject) => {
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob); // converte para base64
+    });
+
+    doc.addImage(imageData, 'PNG', 10, 10, 28, 28);
   } catch (e) {
+    console.warn('Falha ao carregar logo:', e);
     doc.setFontSize(12);
     doc.text('LOGO', 10, 20);
   }
 
+  // ... (resto igual ao que você já fez)
+
   doc.setFontSize(14);
   doc.setTextColor(40);
-  doc.text('xAI Analytics', 120, 15);
+  doc.text('Departamento da Engenharia Alimentar', 115, 15);
   doc.setFontSize(10);
-  doc.text('Av. das Empresas, Chimoio, Moçambique', 120, 22);
-  doc.text('Email: contact@xaianalytics.com', 120, 27);
-  doc.text('Telefone: +258 123 456 789', 120, 32);
+  doc.text('Av. das Empresas, Chimoio, Moçambique', 115, 22);
+  doc.text('Email: contact@xaianalytics.com', 115, 27);
+  doc.text('Telefone: +258 123 456 789', 115, 32);
 
   doc.setLineWidth(0.5);
   doc.line(10, 38, 200, 38);
@@ -86,12 +104,12 @@ export const relatorioEmPDF2 = ({
   doc.text(`Morada: ${dado.cliente.morada || 'N/A'}`, 10, 86);
 
   doc.setFontSize(12);
-  doc.text('Detalhes da Proforma', 150, 60);
+  doc.text('Detalhes da Proforma', 120, 60);
   doc.setFontSize(10);
-  doc.text(`Nome: ${dado.proforma.nome || 'N/A'}`, 150, 68);
-  doc.text(`Data: ${dado.proforma.data || 'N/A'}`, 150, 74);
-  doc.text(`Estado: ${dado.proforma.estado || 'N/A'}`, 150, 80);
-  doc.text(`Total pago: ${dado.proforma.totalpagar || 0} MZN`, 150, 86);
+  doc.text(`Nome: ${dado.proforma.nome || 'N/A'}`, 120, 68);
+  doc.text(`Data: ${formatarDataMZ(dado.proforma.data) || 'N/A'}`, 120, 74);
+  doc.text(`Estado: ${dado.proforma.estado || 'N/A'}`, 120, 80);
+  doc.text(`Total pago: ${dado.proforma.totalpagar || 0} MZN`, 120, 86);
 
   doc.setFontSize(12);
   doc.text('Parâmetros Analisados', 10, 100);
@@ -105,11 +123,11 @@ export const relatorioEmPDF2 = ({
     const analise = dado.analises.find(
       (a) => a.parametro === param.id && a.proforma === dado.proforma?.id
     );
-
+    console.log("parametrosSelecionados\n",parametrosSelecionados,"analise\n",analise)
     return [
       `${param.id} - ${param.nome}`,
       dado.parametros.find((d) => d.id === param.id)?.valor ?? 'N/A',
-      analise ? analise.resultado?.toString() ?? 'Por analisar' : 'Por analisar',
+      analise?.valorfinal?.toString(),
     ];
   });
 

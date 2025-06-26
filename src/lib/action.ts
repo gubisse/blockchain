@@ -17,6 +17,7 @@ export function createAddClienteAction<T extends { id: string; nome: string }>(c
     }
   });
 }
+
 export function createAddProformaAction<T extends { id: string; nome: string }>(collectionName: string) {
   return routeAction$(async (form: JSONObject, { fail }) => {
     try {
@@ -92,7 +93,7 @@ export function createEditProformaAction<T extends { id: string; nome: string }>
       }
       const dado = form as T;
       await updateDado(collectionName, dado.id, {
-        nome: dado.nome.trim(),
+        ...dado,
       });
       return { success: true, message: `${collectionName} editado com sucesso.`, dado };
     } catch (error) {
@@ -137,3 +138,31 @@ export const useAddProforma = routeAction$(async (form: JSONObject, { fail }) =>
     return fail(500, { message: `Erro interno ao salvar: ${error}` });
   }
 });*/
+
+
+export function createAddAnaliseAction<T extends { id: string; nome: string }>(collectionName: string) {
+  return routeAction$(async (form: JSONObject, { fail }) => {
+    try {
+      if (!form || !form.proforma || typeof form.proforma !== 'string') {
+        return fail(400, { message: `Proforma é obrigatório para adicionar ${collectionName}.` });
+      }
+      if (!form || !form.parametro || typeof form.parametro !== 'string') {
+        return fail(400, { message: `Parametro é obrigatório para adicionar ${collectionName}.` });
+      }
+      if (!form || !form.data || typeof form.data !== "string") {
+        return fail(400, { message: `Data é obrigatória para adicionar ${collectionName}.` });
+      }
+
+      const dataValida = new Date(form.data);
+      if (isNaN(dataValida.getTime())) {
+        return fail(400, { message: "Formato de data inválido. Use um formato ISO (YYYY-MM-DDTHH:mm:ssZ)." });
+      }
+
+      const dado = form as T;
+      await addDado(collectionName, dado);
+      return { success: true, message: `${collectionName} adicionado com sucesso.`, dado };
+    } catch (error) {
+      return fail(500, { message: `Erro interno ao salvar ${collectionName}: ${error}` });
+    }
+  });
+}
