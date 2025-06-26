@@ -140,7 +140,7 @@ export const useAddProforma = routeAction$(async (form: JSONObject, { fail }) =>
 });*/
 
 
-export function createAddAnaliseAction<T extends { id: string; nome: string }>(collectionName: string) {
+export function createAddAnaliseAction<T extends { id: string}>(collectionName: string) {
   return routeAction$(async (form: JSONObject, { fail }) => {
     try {
       if (!form || !form.proforma || typeof form.proforma !== 'string') {

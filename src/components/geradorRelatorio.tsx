@@ -107,7 +107,7 @@ export const relatorioEmPDF2 = async ({
   doc.text('Detalhes da Proforma', 120, 60);
   doc.setFontSize(10);
   doc.text(`Nome: ${dado.proforma.nome || 'N/A'}`, 120, 68);
-  doc.text(`Data: ${formatarDataMZ(dado.proforma.data) || 'N/A'}`, 120, 74);
+  doc.text(`Data: ${formatarDataMZ(dado.proforma.data || "") || 'N/A'}`, 120, 74);
   doc.text(`Estado: ${dado.proforma.estado || 'N/A'}`, 120, 80);
   doc.text(`Total pago: ${dado.proforma.totalpagar || 0} MZN`, 120, 86);
 
@@ -123,13 +123,14 @@ export const relatorioEmPDF2 = async ({
     const analise = dado.analises.find(
       (a) => a.parametro === param.id && a.proforma === dado.proforma?.id
     );
-    console.log("parametrosSelecionados\n",parametrosSelecionados,"analise\n",analise)
+
     return [
       `${param.id} - ${param.nome}`,
-      dado.parametros.find((d) => d.id === param.id)?.valor ?? 'N/A',
-      analise?.valorfinal?.toString(),
+      dado.parametros.find((d) => d.id === param.id)?.valor?.toString() ?? 'N/A',
+      analise?.valorfinal?.toString() ?? 'Por analisar',
     ];
   });
+
 
   autoTable(doc, {
     startY: 108,

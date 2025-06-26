@@ -131,18 +131,10 @@ export default component$(() => {
     const proforma = state.proformas.find((d) => d.id === state.form.analise.proforma);
     if (proforma) {
 
-  /*    state.form.proforma = proforma;
-      state.parametrosEs = proforma.parametros
-        .split(",")
-        .map((param) => (
-          state.parametros.filter((p) => p.id === param))
-        ).flat();
-*/
       // Encontrados
       state.parametrosEs = proforma.parametros
         .split(",")
         .map((param) => state.parametros.find((p) => p.id === param))
-        .filter(Boolean); // remove undefined
 
       // Não encontrados
       state.parametrosNaoEncontrados = proforma.parametros
