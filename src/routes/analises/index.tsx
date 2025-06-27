@@ -124,28 +124,28 @@ export default component$(() => {
   });
 
 
-  useTask$(({ track }) => {
-    track(() => state.form.analise.proforma);
-    if (!state.form.analise.proforma) return;
+    useTask$(({ track }) => {
+      track(() => state.form.analise.proforma);
+      if (!state.form.analise.proforma) return;
 
-    const proforma = state.proformas.find((d) => d.id === state.form.analise.proforma);
-    if (proforma) {
+      const proforma = state.proformas.find((d) => d.id === state.form.analise.proforma);
+      if (proforma) {
 
-      // Encontrados
-      state.parametrosEs = proforma.parametros
-        .split(",")
-        .map((param) => state.parametros.find((p) => p.id === param))
-        .filter(Boolean); // remove undefined
+        // Encontrados
+        state.parametrosEs = proforma.parametros
+          .split(",")
+          .map((param) => state.parametros.find((p) => p.id === param))
+          .filter(Boolean); // remove undefined
 
-      // Não encontrados
-      state.parametrosNaoEncontrados = proforma.parametros
-        .split(",")
-        .filter((param) => !state.parametros.some((p) => p.id === param));
+        // Não encontrados
+        state.parametrosNaoEncontrados = proforma.parametros
+          .split(",")
+          .filter((param) => !state.parametros.some((p) => p.id === param));
 
-      state.camposNecessarios = [];
-      state.valores = [];
-    }
-  });
+        state.camposNecessarios = [];
+        state.valores = [];
+      }
+    });
 
   useTask$(({ track }) => {
     track(() => state.form.analise.parametro);
