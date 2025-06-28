@@ -252,7 +252,7 @@ export default component$(() => {
       ),
     };
 
-    let r = await addAnaliseAction.submit(novaAnalise as unknown as Record<string, unknown>);
+    const r = await addAnaliseAction.submit(novaAnalise as unknown as Record<string, unknown>);
     
     // Atualiza o estado da proforma para "analisada"
     const proformaFind = state.proformas.find((p) => p.id === proformaId);
@@ -286,7 +286,7 @@ export default component$(() => {
       }
       proformaFind.estado = estadoFinal;
       
-      let rep = await editProformaAction.submit(proformaFind as unknown as Record<string, unknown>);
+      const rep = await editProformaAction.submit(proformaFind as unknown as Record<string, unknown>);
 
       if (!rep?.value?.success) {      
         carregando.value = false
