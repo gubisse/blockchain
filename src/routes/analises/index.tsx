@@ -137,15 +137,11 @@ export default component$(() => {
       .map((id) => state.parametros.find((p) => p.id === id))
       .filter((p): p is Parametro => p !== undefined);
 
-    console.log("state.parametrosEncontrados\n\n",state.parametrosEs)
-
     // Parâmetros não encontrados
     state.parametrosNaoEncontrados = ids.filter(
       (id) => !state.parametros.some((p) => p.id === id)
     );
 
-
-    console.log("state.parametrosNaoEncontrados\n\n",state.parametrosNaoEncontrados)
     // Limpa os campos e valores anteriores
     state.camposNecessarios = [];
     state.valores = [];
@@ -184,12 +180,15 @@ export default component$(() => {
 
   const calcular = $(() => {
     if (Object.keys(state.form.analise).length > 0) {
-      state.valores = state.camposNecessarios.map((campo) => `${campo}: ${state.form.analise[campo] ?? "0"}`);
+      state.valores = state.camposNecessarios.map(
+        (campo) => `${campo}: ${state.form.analise.campos?.[campo] ?? "0"}`
+      );
       const parametroSelecionado = state.form.parametro;
       if (parametroSelecionado?.formula) {
         let formula = parametroSelecionado.formula;
         state.camposNecessarios.forEach((campo) => {
-          const valor = Number(state.form.analise[campo]) || 0;
+          const raw = state.form.analise.campos?.[campo];
+          const valor = raw !== undefined ? Number(raw) : 0;
           const regex = new RegExp(`\\b${campo}\\b`, "g");
           formula = formula.replace(regex, valor.toString());
         });
