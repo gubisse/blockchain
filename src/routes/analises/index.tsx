@@ -219,6 +219,9 @@ export default component$(() => {
   // Adicionar analise na BD
   const addAnalise = $( async (e: Event) => {
     e.preventDefault();
+    
+    carregando.value = true
+    
     const form = e.target as HTMLFormElement;
     const dados = Object.fromEntries(new FormData(form).entries());
 
@@ -230,7 +233,8 @@ export default component$(() => {
       (a) => a.proforma === proformaId && a.parametro === parametro
     );
     if (jaExiste) {
-      state.mensagem = "Já existe uma análise com esta proforma e este parâmetro.";
+      carregando.value = false
+      state.erro = "Já existe uma análise com esta proforma e este parâmetro.";
       return;
     }
 
@@ -250,12 +254,13 @@ export default component$(() => {
 
     let r = await addAnaliseAction.submit(novaAnalise as unknown as Record<string, unknown>);
     
-    state.analises.push(novaAnalise);
-    
-
     // Atualiza o estado da proforma para "analisada"
     const proformaFind = state.proformas.find((p) => p.id === proformaId);
-
+    if (!r?.value?.success) {      
+      carregando.value = false
+      state.erro = r?.value?.message;
+      return;
+    }
     if (proformaFind) {
       const esperados = proformaFind.parametros
         .split(",")
@@ -283,7 +288,12 @@ export default component$(() => {
       
       let rep = await editProformaAction.submit(proformaFind as unknown as Record<string, unknown>);
 
-      console.log(
+      if (!rep?.value?.success) {      
+        carregando.value = false
+        state.erro = r?.value?.message;
+        return;
+      }
+      /*console.log(
         "%c[DEBUG ANALISE PROFORMA]",
         "color: blue; font-weight: bold;",
         {
@@ -295,11 +305,10 @@ export default component$(() => {
           proformaAtualizadoResposta: rep,
 
         }
-      );
+      );*/
     }
-
- 
     form.reset();
+    carregando.value = false
     state.mensagem = "Análise salva com sucesso!";
   });
 
@@ -345,11 +354,7 @@ export default component$(() => {
         return valor.toString().toLowerCase().includes(termo);
       });
     });
-
   });
-
-
-
 
   const totalPaginas = useComputed$(() => Math.ceil(filtrado.value.length / itemsPerPage));
   const paginado = useComputed$(() => {
@@ -378,14 +383,6 @@ export default component$(() => {
   return (
     <>
       <Header/>
-      {carregando.value && (
-        <div class="p-4 max-w-screen-lg mx-auto flex min-h-screen items-center justify-center bg-gray-100">
-          <div class="bg-white p-8 rounded-2xl shadow-lg text-center w-full max-w-md">
-            <p class="text-gray-600 mb-6">Estamos carregando seu ambiente personalizado...</p>
-            <div class="animate-spin rounded-full h-10 w-10 border-t-4 border-blue-500 border-solid mx-auto"></div>
-          </div>
-        </div>
-      )}
       <main class="p-4 max-w-screen-lg mx-auto mt-10">
         <h2 class="text-lg font-semibold uppercase">Calcular</h2>
         <form preventdefault:submit onSubmit$={addAnalise} class="bg-white p-6 rounded-xl shadow space-y-6">
@@ -589,6 +586,32 @@ export default component$(() => {
           ))}
         </div>
 
+        {paginado?.value?.length !== 0 && totalPaginas.value !== 1 && (
+          <div class="flex justify-center items-center mt-3 gap-3">
+            <button
+              class="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600"
+              onClick$={() => (paginaCorrente.value = Math.max(1, paginaCorrente.value - 1))}
+              disabled={paginaCorrente.value === 1}
+            >
+              Anterior
+            </button>
+            <span>
+              {paginaCorrente.value} de {totalPaginas.value}
+            </span>
+            <button
+              class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600"
+              onClick$={() => (paginaCorrente.value = Math.min(totalPaginas.value, paginaCorrente.value + 1))}
+              disabled={paginaCorrente.value === totalPaginas.value}
+            >
+              Próxima
+            </button>
+          </div>
+        )}
+        {paginado?.value?.length === 0 && (
+          <div class="bg-white border p-4 rounded-xl shadow-sm mt-4">
+            <p class="text-sm text-gray-600"><strong>Nenhuma analise cadastrada</strong></p>
+          </div>
+        )}
 
 
       </main>
@@ -661,6 +684,22 @@ export default component$(() => {
 
 
               </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Mensagem */}
+      {carregando.value && (
+        <div class="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
+          <div class="bg-green-100 border border-green-400 text-green-800 px-6 py-4 rounded shadow-xl max-w-sm text-center relative">
+            {carregando.value && (
+              <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                <div class="bg-white p-8 rounded-2xl shadow-lg text-center w-full max-w-md">
+                  <p class="text-gray-600 mb-6">Trabalhando...</p>
+                  <div class="animate-spin rounded-full h-10 w-10 border-t-4 border-blue-500 border-solid mx-auto"></div>
+                </div>
+              </div>
             )}
           </div>
         </div>

@@ -451,7 +451,7 @@ return (
           </div>
 
         )}
-        {paginado?.value?.length !== 0 && (
+        {paginado?.value?.length !== 0 && totalPaginas.value !== 1 && (
           <div class="flex justify-center items-center mt-3 gap-3">
             <button
               class="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600"
