@@ -40,11 +40,7 @@ export default component$(() => {
   // Usado para pesquisar
   const isSearch = useSignal("");
   
-  type CamposCliente = keyof Cliente;
-  type CamposAnalise = keyof Analise;
-  const camposCliente = ["nome", "telefone", "email", "morada"] as const;
-  const camposAnalise = ["parametro", "data"] as const;
-  const selectedColumn = useSignal<"nome" | "telefone" | "email" | "morada" | "parametro" | "data" | "" >(""); // valor inicial em branco
+  const selectedColumn = useSignal<keyof Cliente | keyof Analise>("nome"); // valor inicial em branco
 
   const itemsPerPage = 9;
   const paginaCorrente = useSignal(1);
@@ -328,23 +324,28 @@ export default component$(() => {
     if (!termo || !selectedColumn.value) return lista;
 
     return lista.filter(({ cliente, analises }) => {
-      // ✅ Busca por cliente
-      if (camposCliente.includes(selectedColumn.value as CamposCliente)) {
-        const valor = cliente?.[selectedColumn.value as CamposCliente]?.toString().toLowerCase();
-        return valor?.includes(termo);
+      const campo = selectedColumn.value;
+      if (!campo || !termo) return true; // nenhum filtro ativo
+
+      // 1. Tentativa com cliente
+      const valorCliente = cliente?.[campo as keyof Cliente];
+      if (typeof valorCliente === "string" && valorCliente.toLowerCase().includes(termo)) {
+        return true;
       }
 
-      if (camposAnalise.includes(selectedColumn.value as CamposAnalise)) {
-        return analises.some((analise) => {
-          const valor = analise[selectedColumn.value as CamposAnalise]?.toString().toLowerCase();
-          if (selectedColumn.value === "data") {
-            return formatarDataHora(valor)?.includes(termo);
-          }
-          return valor?.includes(termo);
-        });
-      }
+      // 2. Tentativa com análises (apenas se existir alguma)
+      return analises.some((analise) => {
+        const valor = analise[campo as keyof Analise];
+        if (!valor) return false;
 
+        if (campo === "data") {
+          return formatarDataHora(valor.toString())?.includes(termo);
+        }
+
+        return valor.toString().toLowerCase().includes(termo);
+      });
     });
+
   });
 
 
