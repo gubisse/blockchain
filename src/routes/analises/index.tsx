@@ -268,7 +268,7 @@ export default component$(() => {
 
       proformaFind.estado = todosAnalisados ? "completa" : "incompleta";
 
-      let estadoFinal: string;
+      let estadoFinal = "";
       if (analisados.length === 0 && proformaFind.estado === "incompleta" ) {
         estadoFinal = "pendente";
       }else if(analisados.length !== 0 && proformaFind.estado === "incompleta" ){
@@ -562,7 +562,7 @@ export default component$(() => {
                     <strong>Proforma:</strong> {isSelected.value.nome}
                   </p>
                   <p>
-                    <strong>Data:</strong> {formatarDataMZ(isSelected.value.data)}
+                    <strong>Data:</strong> {formatarDataMZ(isSelected.value.data || "")}
                   </p>
                   <p>
                     <strong>Parâmetros:</strong>
