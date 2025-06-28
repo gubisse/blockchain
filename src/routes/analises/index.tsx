@@ -123,29 +123,28 @@ export default component$(() => {
     state.comprovativos = comprovativos;
   });
 
-
   useTask$(({ track }) => {
     track(() => state.form.analise.proforma);
     if (!state.form.analise.proforma) return;
 
     const proforma = state.proformas.find((d) => d.id === state.form.analise.proforma);
-    if (proforma) {
+    if (!proforma) return;
 
+    const ids = proforma.parametros.split(",").map((id) => id.trim());
 
-      // Encontrados
-      state.parametrosEs = proforma.parametros
-        .split(",")
-        .map((param) => state.parametros.find((p) => p.id === param))
-        .filter(Boolean); // remove undefined
+    // Parâmetros encontrados
+    state.parametrosEs = ids
+      .map((id) => state.parametros.find((p) => p.id === id))
+      .filter((p): p is Parametro => p !== undefined);
 
-      // Não encontrados
-      state.parametrosNaoEncontrados = proforma.parametros
-        .split(",")
-        .filter((param) => !state.parametros.some((p) => p.id === param));
+    // Parâmetros não encontrados
+    state.parametrosNaoEncontrados = ids.filter(
+      (id) => !state.parametros.some((p) => p.id === id)
+    );
 
-      state.camposNecessarios = [];
-      state.valores = [];
-    }
+    // Limpa os campos e valores anteriores
+    state.camposNecessarios = [];
+    state.valores = [];
   });
 
   useTask$(({ track }) => {

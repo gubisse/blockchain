@@ -39,7 +39,7 @@ export interface Parametro {
 }
 
 export interface Analise {
-  id?: string;
+  id: string;
   proforma: string;
   parametro: string;
   valorfinal: number;
