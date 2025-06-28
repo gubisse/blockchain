@@ -123,28 +123,29 @@ export default component$(() => {
     state.comprovativos = comprovativos;
   });
 
+
   useTask$(({ track }) => {
     track(() => state.form.analise.proforma);
     if (!state.form.analise.proforma) return;
 
     const proforma = state.proformas.find((d) => d.id === state.form.analise.proforma);
-    if (!proforma) return;
+    if (proforma) {
 
-    const ids = proforma.parametros.split(",").map((id) => id.trim());
 
-    // Parâmetros encontrados
-    state.parametrosEs = ids
-      .map((id) => state.parametros.find((p) => p.id === id))
-      .filter((p): p is Parametro => p !== undefined);
+      // Encontrados
+      state.parametrosEs = proforma.parametros
+        .split(",")
+        .map((param) => state.parametros.find((p) => p.id === param))
+        .filter(Boolean); // remove undefined
 
-    // Parâmetros não encontrados
-    state.parametrosNaoEncontrados = ids.filter(
-      (id) => !state.parametros.some((p) => p.id === id)
-    );
+      // Não encontrados
+      state.parametrosNaoEncontrados = proforma.parametros
+        .split(",")
+        .filter((param) => !state.parametros.some((p) => p.id === param));
 
-    // Limpa os campos e valores anteriores
-    state.camposNecessarios = [];
-    state.valores = [];
+      state.camposNecessarios = [];
+      state.valores = [];
+    }
   });
 
   useTask$(({ track }) => {
@@ -177,26 +178,19 @@ export default component$(() => {
     }
   });
 
-  const calcular = $(() => {
-    if (Object.keys(state.form.analise.campos || {}).length > 0) {
-      // Exibir os valores que serão usados na fórmula
-      state.valores = state.camposNecessarios.map((campo) =>
-        `${campo}: ${state.form.analise.campos?.[campo] ?? "0"}`
-      );
 
+  const calcular = $(() => {
+    if (Object.keys(state.form.analise).length > 0) {
+      state.valores = state.camposNecessarios.map((campo) => `${campo}: ${state.form.analise[campo] ?? "0"}`);
       const parametroSelecionado = state.form.parametro;
       if (parametroSelecionado?.formula) {
         let formula = parametroSelecionado.formula;
-
-        // Substitui os campos na fórmula com os valores preenchidos
         state.camposNecessarios.forEach((campo) => {
-          const valor = Number(state.form.analise.campos?.[campo]) || 0;
+          const valor = Number(state.form.analise[campo]) || 0;
           const regex = new RegExp(`\\b${campo}\\b`, "g");
           formula = formula.replace(regex, valor.toString());
         });
-
         state.formulaPreenchida = formula;
-
         const resultado = evaluateExpression(formula);
         if (Number.isFinite(resultado)) {
           state.formulaPreenchida = resultado;
@@ -208,7 +202,6 @@ export default component$(() => {
       }
     }
   });
-
 
   const addAnalise = $( async (e: Event) => {
     e.preventDefault();
@@ -264,7 +257,7 @@ export default component$(() => {
 
       proformaFind.estado = todosAnalisados ? "completa" : "incompleta";
 
-      let estadoFinal = "";
+      let estadoFinal: string;
       if (analisados.length === 0 && proformaFind.estado === "incompleta" ) {
         estadoFinal = "pendente";
       }else if(analisados.length !== 0 && proformaFind.estado === "incompleta" ){
@@ -393,7 +386,7 @@ export default component$(() => {
                   required
                   class="border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   onChange$={(e) =>
-                    (state.form.analise.campos?.[campo] = Number((e.target as HTMLInputElement).value))
+                    (state.form.analise[campo] = Number((e.target as HTMLInputElement).value))
                   }
                 />
               </div>
@@ -554,7 +547,7 @@ export default component$(() => {
                     <strong>Proforma:</strong> {isSelected.value.nome}
                   </p>
                   <p>
-                    <strong>Data:</strong> {formatarDataMZ(isSelected.value?.data || "")}
+                    <strong>Data:</strong> {formatarDataMZ(isSelected.value.data)}
                   </p>
                   <p>
                     <strong>Parâmetros:</strong>
