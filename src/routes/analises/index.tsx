@@ -5,7 +5,7 @@ import { Footer } from "~/components/Footer";
 import type { Cliente, Proforma, Parametro, Analise, Comprovativo } from "~/components/entidade";
 import { elementosQuimicos118 } from "~/components/dado";
 import { getAllDados } from "~/components/DTO";
-import { formatarDataMZ } from "~/components/util";
+import { formatarDataMZ, formatarDataHora } from "~/components/util";
 import { relatorioEmPDF2  } from "~/components/geradorRelatorio";
 import { createAddAnaliseAction, createEditProformaAction } from '~/lib/action';
 
@@ -39,6 +39,11 @@ export default component$(() => {
 
   // Usado para pesquisar
   const isSearch = useSignal("");
+  
+  type CamposCliente = keyof Cliente;
+  type CamposAnalise = keyof Analise;
+  const camposCliente = ["nome", "telefone", "email", "morada"] as const;
+  const camposAnalise = ["parametro", "data"] as const;
   const selectedColumn = useSignal<"nome" | "telefone" | "email" | "morada" | "parametro" | "data" | "" >(""); // valor inicial em branco
 
   const itemsPerPage = 9;
@@ -324,22 +329,21 @@ export default component$(() => {
 
     return lista.filter(({ cliente, analises }) => {
       // ✅ Busca por cliente
-      if (["nome", "telefone", "email", "morada"].includes(selectedColumn.value)) {
-        const valorCliente = cliente?.[selectedColumn.value]?.toString().toLowerCase();
-        return valorCliente?.includes(termo);
+      if (camposCliente.includes(selectedColumn.value as CamposCliente)) {
+        const valor = cliente?.[selectedColumn.value as CamposCliente]?.toString().toLowerCase();
+        return valor?.includes(termo);
       }
 
-      // ✅ Busca por data ou outros campos da análise
-      return analises.some((analise) => {
-        const campo = selectedColumn.value;
-        const valor = analise[campo]?.toString().toLowerCase();
+      if (camposAnalise.includes(selectedColumn.value as CamposAnalise)) {
+        return analises.some((analise) => {
+          const valor = analise[selectedColumn.value as CamposAnalise]?.toString().toLowerCase();
+          if (selectedColumn.value === "data") {
+            return formatarDataHora(valor)?.includes(termo);
+          }
+          return valor?.includes(termo);
+        });
+      }
 
-        if (campo === "data") {
-          return formatarDataHora(valor)?.includes(termo);
-        }
-
-        return valor?.includes(termo);
-      });
     });
   });
 
