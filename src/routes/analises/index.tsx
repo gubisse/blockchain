@@ -1,4 +1,4 @@
-import { component$, useSignal, useStore, $, useTask$ } from "@builder.io/qwik";
+import { component$, useSignal, useStore, $, useTask$, useComputed$ } from "@builder.io/qwik";
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { Header } from "~/components/Header";
 import { Footer } from "~/components/Footer";
@@ -33,16 +33,18 @@ const evaluateExpression = (expression: string): number => {
 
 export default component$(() => {
   const carregando = useSignal(false);
-  const visualizacaoTabela = useSignal(false);
   const isActiveModalCliente = useSignal<null | "relatorio">(null);
   const isSelected = useSignal<Partial<Proforma> | null>(null);
 
 
+  // Usado para pesquisar
   const isSearch = useSignal("");
-  const selectedColumn = useSignal<keyof Cliente>("nome");
+  const selectedColumn = useSignal<"nome" | "telefone" | "email" | "morada" | "parametro" | "data" | "" >(""); // valor inicial em branco
+
   const itemsPerPage = 9;
   const paginaCorrente = useSignal(1);
 
+  // Loader de dados
   const clientesLoader = useGetClientes();
   const proformasLoader = useGetProformas();
   const analisesLoader = useGetAnalises();
@@ -108,7 +110,7 @@ export default component$(() => {
     mensagem: "",
   });
 
-
+  // escutador de novos dados
   useTask$(async ({ track }) => {
     const clientes = await track(() => clientesLoader.value);
     const proformas = await track(() => proformasLoader.value);
@@ -177,7 +179,7 @@ export default component$(() => {
     }
   });
 
-
+  // Calculador
   const calcular = $(() => {
     if (Object.keys(state.form.analise).length === 0) return;
     console.log("Calculando ", state.form.analise)
@@ -213,7 +215,7 @@ export default component$(() => {
     }
   });
 
-
+  // Adicionar analise na BD
   const addAnalise = $( async (e: Event) => {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
@@ -298,6 +300,57 @@ export default component$(() => {
  
     form.reset();
     state.mensagem = "Análise salva com sucesso!";
+  });
+
+
+  // Filtragem e paginação
+  const filtrado = useComputed$(() => {
+    const termo = isSearch.value?.toLowerCase().trim();
+
+    const proformasValidas = state.proformas.filter(
+      (proforma) =>
+        proforma.estado === "completa" &&
+        state.comprovativos.some((c) => c.proforma === proforma.id)
+    );
+
+    const lista = proformasValidas.map((proforma) => {
+      const cliente = state.clientes.find((c) => c.id === proforma.cliente);
+      const analises = state.analises.filter((a) => a.proforma === proforma.id);
+      return { proforma, cliente, analises };
+    });
+
+    // Se não há busca, retorna tudo
+    if (!termo || !selectedColumn.value) return lista;
+
+    return lista.filter(({ cliente, analises }) => {
+      // ✅ Busca por cliente
+      if (["nome", "telefone", "email", "morada"].includes(selectedColumn.value)) {
+        const valorCliente = cliente?.[selectedColumn.value]?.toString().toLowerCase();
+        return valorCliente?.includes(termo);
+      }
+
+      // ✅ Busca por data ou outros campos da análise
+      return analises.some((analise) => {
+        const campo = selectedColumn.value;
+        const valor = analise[campo]?.toString().toLowerCase();
+
+        if (campo === "data") {
+          return formatarDataHora(valor)?.includes(termo);
+        }
+
+        return valor?.includes(termo);
+      });
+    });
+  });
+
+
+
+
+  const totalPaginas = useComputed$(() => Math.ceil(filtrado.value.length / itemsPerPage));
+  const paginado = useComputed$(() => {
+    const start = (paginaCorrente.value - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    return filtrado.value.slice(start, end);
   });
 
 
@@ -454,8 +507,9 @@ export default component$(() => {
             {/* Seletor de coluna para filtrar */}
             <select
               class="border p-2 rounded text-sm"
+              value={selectedColumn.value}
               onChange$={(e) =>
-                (selectedColumn.value = (e.target as HTMLSelectElement).value as keyof Cliente)
+                (selectedColumn.value = (e.target as HTMLSelectElement).value as any)
               }
             >
               <option value="">Pesquisar por</option>
@@ -463,8 +517,9 @@ export default component$(() => {
               <option value="telefone">Telefone</option>
               <option value="email">Email</option>
               <option value="morada">Morada</option>
-              <option value="data">Data</option>
+              <option value="data">Data da Análise</option>
             </select>
+
 
             {/* Campo de pesquisa */}
             <input
@@ -481,63 +536,54 @@ export default component$(() => {
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {state.proformas
-            .filter((proforma) => 
-              proforma.estado === "completa" &&
-              state.comprovativos.some((c) => c.proforma === proforma.id)
-            )
-            .map((proforma, i) => {
-              const cliente = state.clientes.find((c) => c.id === proforma.cliente);
-              const analises = state.analises.filter((a) => a.proforma === proforma.id);
+          {paginado.value.map(({ proforma, cliente, analises }) => (
+            <div key={proforma.id} class="bg-white border border-gray-200 p-6 rounded-2xl shadow-md">
+              <div class="mb-4">
+                <h3 class="font-bold text-gray-800 uppercase">
+                  {cliente?.nome ?? "Desconhecido"}
+                </h3>
+                <p class="text-sm text-blue-500">
+                  {proforma.nome} :: {formatarDataMZ(proforma.data)}
+                </p>
+              </div>
 
-              return (
-                <div key={i} class="bg-white border border-gray-200 p-6 rounded-2xl shadow-md">
-                  <div class="mb-4">
-                    <h3 class="font-bold text-gray-800 uppercase">
-                      {cliente?.nome ?? "Desconhecido"}
-                    </h3>
-                    <p class="text-sm text-blue-500">
-                      {proforma.nome} :: {formatarDataMZ(proforma.data)}
-                    </p>
-                  </div>
+              <div class="space-y-2">
+                {analises.length > 0 ? (
+                  analises.map((analise) => (
+                    <div key={analise.id} class="bg-gray-50 rounded-lg p-3 border">
+                      <p class="text-sm text-gray-700">
+                        <strong class="text-gray-900">Parâmetro:</strong>{" "}
+                        {analise.parametro} -{" "}
+                        {elementosQuimicos118.find((p) => p.id === analise.parametro)?.nome ?? analise.parametro}
+                      </p>
+                      <p class="text-sm text-gray-700">
+                        <strong class="text-gray-900">Resultado:</strong> {analise.valorfinal}
+                      </p>
+                      <p class="text-sm text-gray-700">
+                        <strong class="text-gray-900">Data:</strong> {formatarDataMZ(analise.data)}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <p class="italic text-gray-400 text-sm">Sem análises encontradas.</p>
+                )}
+              </div>
 
-                  <div class="space-y-2">
-                    {analises.length > 0 ? (
-                      analises.map((analise) => (
-                        <div key={analise.id} class="bg-gray-50 rounded-lg p-3 border">
-                          <p class="text-sm text-gray-700">
-                            <strong class="text-gray-900">Parâmetro:</strong>{" "}
-                            {analise.parametro} -{" "}
-                            {elementosQuimicos118.find((p) => p.id === analise.parametro)?.nome ?? analise.parametro}
-                          </p>
-                          <p class="text-sm text-gray-700">
-                            <strong class="text-gray-900">Resultado:</strong> {analise.valorfinal}
-                          </p>
-                          <p class="text-sm text-gray-700">
-                            <strong class="text-gray-900">Data:</strong> {formatarDataMZ(analise.data)}
-                          </p>
-                        </div>
-                      ))
-                    ) : (
-                      <p class="italic text-gray-400 text-sm">Sem análises encontradas.</p>
-                    )}
-                  </div>
-
-                  <div class="mt-4 flex justify-end">
-                    <button
-                      class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow"
-                      onClick$={() => {
-                        isSelected.value = proforma;
-                        isActiveModalCliente.value = "relatorio";
-                      }}
-                    >
-                      Ver Relatório
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+              <div class="mt-4 flex justify-end">
+                <button
+                  class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow"
+                  onClick$={() => {
+                    isSelected.value = proforma;
+                    isActiveModalCliente.value = "relatorio";
+                  }}
+                >
+                  Ver Relatório
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
+
 
 
       </main>

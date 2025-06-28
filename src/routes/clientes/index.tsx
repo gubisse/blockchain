@@ -250,7 +250,7 @@ export default component$(() => {
   });
 
 
-    // Filtragem e paginação
+  // Filtragem e paginação
   const filtrado = useComputed$(() => {
     let result = state.clientes;
     
