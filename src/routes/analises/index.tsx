@@ -179,31 +179,40 @@ export default component$(() => {
 
 
   const calcular = $(() => {
-    if (Object.keys(state.form.analise).length > 0) {
-      state.valores = state.camposNecessarios.map(
-        (campo) => `${campo}: ${state.form.analise.campos?.[campo] ?? "0"}`
-      );
-      const parametroSelecionado = state.form.parametro;
-      if (parametroSelecionado?.formula) {
-        let formula = parametroSelecionado.formula;
-        state.camposNecessarios.forEach((campo) => {
-          const raw = state.form.analise.campos?.[campo];
-          const valor = raw !== undefined ? Number(raw) : 0;
-          const regex = new RegExp(`\\b${campo}\\b`, "g");
-          formula = formula.replace(regex, valor.toString());
-        });
-        state.formulaPreenchida = formula;
-        const resultado = evaluateExpression(formula);
-        if (Number.isFinite(resultado)) {
-          state.formulaPreenchida = resultado;
-          state.resultadoFormulaPreenchida = resultado;
-        } else {
-          state.formulaPreenchida = "Erro na fórmula";
-          state.resultadoFormulaPreenchida = 0;
-        }
-      }
+    if (Object.keys(state.form.analise).length === 0) return;
+    console.log("Calculando ", state.form.analise)
+    // Geração de valores visuais (ex: "altura: 10")
+    state.valores = state.camposNecessarios.map((campo) => {
+      const val = state.form.analise.campos?.[campo];
+      return `${campo}: ${val ?? "0"}`;
+    });
+
+    const parametroSelecionado = state.form.parametro;
+    if (!parametroSelecionado?.formula) return;
+
+    let formula = parametroSelecionado.formula;
+
+    state.camposNecessarios.forEach((campo) => {
+      const raw = state.form.analise.campos?.[campo];
+      let valor = Number(raw);
+      if (isNaN(valor)) valor = 0;
+
+      const regex = new RegExp(`\\b${campo}\\b`, "g");
+      formula = formula.replace(regex, valor.toString());
+    });
+
+    state.formulaPreenchida = formula;
+
+    const resultado = evaluateExpression(formula);
+    if (Number.isFinite(resultado)) {
+      state.formulaPreenchida = resultado;
+      state.resultadoFormulaPreenchida = resultado;
+    } else {
+      state.formulaPreenchida = "Erro na fórmula";
+      state.resultadoFormulaPreenchida = 0;
     }
   });
+
 
   const addAnalise = $( async (e: Event) => {
     e.preventDefault();
@@ -387,12 +396,16 @@ export default component$(() => {
                   type="number"
                   required
                   class="border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  onChange$={(e) =>
-                    (state.form.analise[campo] = Number((e.target as HTMLInputElement).value))
-                  }
+                  onChange$={(e) => {
+                    if (!state.form.analise.campos) {
+                      state.form.analise.campos = {};
+                    }
+                    state.form.analise.campos[campo] = Number((e.target as HTMLInputElement).value || "0");
+                  }}
                 />
               </div>
             ))}
+
           </div>
 
           {/* Se houver parâmetros não encontrados */}
