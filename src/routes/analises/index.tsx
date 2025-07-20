@@ -41,8 +41,8 @@ export default component$(() => {
 
   // Verifica o login no lado do cliente
   useVisibleTask$(async () => {
-    logado.value = await VerificarLogin();
-    console.log("ddd:\n",logado.value?.usuario)
+    const logar = await VerificarLogin();
+    logado.value = logar.usuario;
   });
 
   // Usado para pesquisar
