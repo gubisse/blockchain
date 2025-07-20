@@ -45,6 +45,7 @@ export interface Analise {
   valorfinal: number;
   data: string;
   campos: { [key: string]: string | number };
+  usuario: string;
 }
 
 export interface Comprovativo {

@@ -1,14 +1,15 @@
-import { component$, useSignal, useStore, $, useTask$, useComputed$ } from "@builder.io/qwik";
+import { component$, useSignal, useStore, $, useTask$, useComputed$, useVisibleTask$ } from "@builder.io/qwik";
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { Header } from "~/components/Header";
 import { Footer } from "~/components/Footer";
-import type { Cliente, Proforma, Parametro, Analise, Comprovativo } from "~/components/entidade";
+import type { Usuario, Cliente, Proforma, Parametro, Analise, Comprovativo } from "~/components/entidade";
 import { elementosQuimicos118 } from "~/components/dado";
 import { getAllDados } from "~/components/DTO";
-import { formatarDataMZ, formatarDataHora } from "~/components/util";
+import { formatarDataMZ, formatarDataHora, VerificarLogin } from "~/components/util";
 import { relatorioEmPDF2  } from "~/components/geradorRelatorio";
 import { createAddAnaliseAction, createEditProformaAction, createDeleteByIdAction } from '~/lib/action';
 
+export const useGetUsuarios = routeLoader$(async () => getAllDados<Usuario>('usuario'));
 export const useGetClientes = routeLoader$(async () => getAllDados<Cliente>('cliente'));
 export const useGetProformas = routeLoader$(async () => getAllDados<Proforma>('proforma'));
 export const useGetParametros = routeLoader$(async () => getAllDados<Parametro>('parametro'));
@@ -36,6 +37,13 @@ export default component$(() => {
   const isActiveModalCliente = useSignal<null | "relatorio">(null);
   const isSelected = useSignal<Partial<Proforma> | null>(null);
 
+  const logado = useSignal<Usuario | null>(null);
+
+  // Verifica o login no lado do cliente
+  useVisibleTask$(async () => {
+    logado.value = await VerificarLogin();
+    console.log("ddd:\n",logado.value?.usuario)
+  });
 
   // Usado para pesquisar
   const isSearch = useSignal("");
@@ -46,6 +54,8 @@ export default component$(() => {
   const paginaCorrente = useSignal(1);
 
   // Loader de dados
+
+  const usuariosLoader = useGetUsuarios();
   const clientesLoader = useGetClientes();
   const proformasLoader = useGetProformas();
   const analisesLoader = useGetAnalises();
@@ -56,6 +66,7 @@ export default component$(() => {
   const editProformaAction = useEditProforma();
 
   const state = useStore<{
+    usuarios: Usuario[];
     clientes: Cliente[];
     parametros: Parametro[];
     parametrosEs: Parametro[];
@@ -72,6 +83,7 @@ export default component$(() => {
       proforma: Partial<Proforma>;
       parametros: Parametro[];
       analises: Analise[];
+      usuario: Partial<Usuario>;
     };
     form: {
       proforma: Partial<Proforma>;
@@ -83,6 +95,7 @@ export default component$(() => {
     erro: string;
     mensagem: string;
   }>({
+    usuarios: [],
     clientes: [],
     parametros: [],
     parametrosEs: [],
@@ -99,6 +112,7 @@ export default component$(() => {
       proforma: {},
       parametros: [],
       analises: [],
+      usuario: {},
     },
     form: {
       proforma: {},
@@ -113,12 +127,14 @@ export default component$(() => {
 
   // escutador de novos dados
   useTask$(async ({ track }) => {
+    const usuarios = await track(() => usuariosLoader.value);
     const clientes = await track(() => clientesLoader.value);
     const proformas = await track(() => proformasLoader.value);
     const analises = await track(() => analisesLoader.value);
     const parametros = await track(() => parametrosLoader.value);
     const comprovativos = await track(() => comprovativosLoader.value);
 
+    state.usuarios = usuarios;
     state.clientes = clientes;
     state.proformas = proformas;
     state.analises = analises;
@@ -250,6 +266,7 @@ export default component$(() => {
         }),
         {}
       ),
+      usuario: logado.value?.usuario.id
     };
 
     const r = await addAnaliseAction.submit(novaAnalise as unknown as Record<string, unknown>);
@@ -377,9 +394,6 @@ export default component$(() => {
     });
   });
 
-
-
-
   return (
     <>
       <Header/>
@@ -504,7 +518,7 @@ export default component$(() => {
 
         <div class="flex justify-between items-center mb-3 mt-3">
           <h2 class="text-lg font-semibold uppercase">Análises terminadas</h2>
-                    {/* Filtros e alternância de visualização */}
+          {/* Filtros e alternância de visualização */}
           <div class="flex flex-col md:flex-row gap-2 md:gap-4 items-start md:items-center">
             {/* Seletor de coluna para filtrar */}
             <select
@@ -657,6 +671,18 @@ export default component$(() => {
                           <p class="text-xs text-gray-600">{parametro.id}</p>
                           <p class="text-xs text-gray-600">{state.parametros.find((d)=> d.id === parametro.id)?.valor} MZN</p>
                           <p class="text-xs text-gray-600">{state.analises.find((d)=> d.parametro === parametro.id && d.proforma === isSelected.value?.id )?.valorfinal || "Por analisar"}</p>
+                          <hr/>
+                          <p class="text-xs text-gray-600">
+                            {
+                              state.usuarios.find((u) =>
+                                u.id === state.analises.find((d) =>
+                                  d.parametro === parametro.id &&
+                                  d.proforma === isSelected.value?.id
+                                )?.usuario
+                              )?.nome || "Sem usuário"
+                            }
+                          </p>
+
                         </div>
                       ) : (
                         <div class="border p-2 rounded bg-red-100" key={pid}>
@@ -675,6 +701,7 @@ export default component$(() => {
                     state.dadosParaRelatorio.proforma = isSelected.value || {};
                     state.dadosParaRelatorio.parametros = state.parametros;
                     state.dadosParaRelatorio.analises = state.analises;
+                    state.dadosParaRelatorio.usuario = logado.value?.usuario;
                     gerarRelatorioPDF();
                   }}
                   class="mt-4 bg-blue-600 text-white px-4 py-2 rounded"

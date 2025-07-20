@@ -1,7 +1,7 @@
 import { $ } from "@builder.io/qwik";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import type { Cliente, Proforma, Parametro, Analise } from "./entidade";
+import type { Usuario, Cliente, Proforma, Parametro, Analise } from "./entidade";
 import { elementosQuimicos118 } from "./dado";
 import { formatarDataMZ } from "./util";
 
@@ -93,26 +93,52 @@ export const relatorioEmPDF2 = async ({
 
   doc.setFontSize(16);
   doc.setTextColor(0);
+  doc.setFont('helvetica', 'bold'); // ou 'times', 'courier' etc.
   doc.text(titulo, 105, 48, { align: 'center' });
 
   doc.setFontSize(12);
   doc.text('Detalhes do Cliente', 10, 60);
   doc.setFontSize(10);
-  doc.text(`Nome: ${dado.cliente.nome || 'N/A'}`, 10, 68);
-  doc.text(`Telefone: ${dado.cliente.telefone || 'N/A'}`, 10, 74);
-  doc.text(`Email: ${dado.cliente.email || 'N/A'}`, 10, 80);
-  doc.text(`Morada: ${dado.cliente.morada || 'N/A'}`, 10, 86);
+  doc.text('Nome:', 10, 68);
+  doc.setFont('helvetica', 'normal');
+  doc.text(dado.cliente.nome || 'N/A', 30, 68);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Telefone:', 10, 74);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${dado.cliente.telefone || 'N/A'}`, 30, 74);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Email:', 10, 80);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${dado.cliente.email || 'N/A'}`, 30, 80);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Morada:', 10, 86);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${dado.cliente.morada || 'N/A'}`, 30, 86);
 
   doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
   doc.text('Detalhes da Proforma', 120, 60);
   doc.setFontSize(10);
-  doc.text(`Nome: ${dado.proforma.nome || 'N/A'}`, 120, 68);
-  doc.text(`Data: ${formatarDataMZ(dado.proforma.data || "") || 'N/A'}`, 120, 74);
-  doc.text(`Estado: ${dado.proforma.estado || 'N/A'}`, 120, 80);
-  doc.text(`Total pago: ${dado.proforma.totalpagar || 0} MZN`, 120, 86);
+  doc.text('Nome:', 120, 68);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${dado.proforma.nome || 'N/A'}`, 140, 68);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Data:', 120, 74);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${formatarDataMZ(dado.proforma.data || "") || 'N/A'}`, 140, 74);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Estado:', 120, 80);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${dado.proforma.estado || 'N/A'}`, 140, 80);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Total pago:', 120, 86);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${dado.proforma.totalpagar || 0} MZN`, 140, 86);
 
   doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
   doc.text('Parâmetros Analisados', 10, 100);
+  doc.setFont('helvetica', 'normal');
 
   const parametrosSelecionados = (dado.proforma?.parametros ?? '')
     .split(',')
@@ -127,14 +153,15 @@ export const relatorioEmPDF2 = async ({
     return [
       `${param.id} - ${param.nome}`,
       dado.parametros.find((d) => d.id === param.id)?.valor?.toString() ?? 'N/A',
-      analise?.valorfinal?.toString() ?? 'Por analisar',
+      analise?.valorfinal?.toString() ?? '-',
+      analise?.usuario?.toString() ?? '-',
     ];
   });
 
 
   autoTable(doc, {
     startY: 108,
-    head: [['Elemento', 'Custo em MZN', 'Resultado da análise']],
+    head: [['Elemento', 'Custo em MZN', 'Resultado da análise', 'Analisador']],
     body: tableData,
     theme: 'grid',
     styles: { fontSize: 9 },
@@ -148,11 +175,19 @@ export const relatorioEmPDF2 = async ({
 
   const finalY = (doc as any).lastAutoTable.finalY || 200;
 
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const centerX = pageWidth / 2;
+
   doc.setFontSize(12);
-  doc.text('Assinatura do Técnico Responsável', 10, finalY + 20);
-  doc.setFontSize(10);
-  doc.text('_____________________________', 10, finalY + 30);
-  doc.text('Nome: [Nome do Emissor]', 10, finalY + 37);
+  doc.text('Assinatura do Técnico Responsável', centerX, finalY + 20, { align: 'center' });
+
+  doc.setFontSize(10);  
+  doc.setFont('helvetica', 'bold');
+  doc.text('_____________________________', centerX, finalY + 30, { align: 'center' });
+  doc.setFont('helvetica', 'normal');
+
+  doc.text(`${dado.usuario.nome}`, centerX, finalY + 37, { align: 'center' });
+
 
   const dataStr = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
   doc.save(`${dado.cliente.nome || 'relatorio'}_${dataStr}.pdf`);

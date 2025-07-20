@@ -2,7 +2,7 @@ import { component$, useSignal, useStore, $, useTask$, useVisibleTask$ } from "@
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { Header } from "~/components/Header";
 import { Footer } from "~/components/Footer";
-import type { Usuario, Cliente, Proforma, Parametro, Comprovativo, Deletar } from "~/components/entidade";
+import type { Usuario, Cliente, Proforma, Parametro, Comprovativo } from "~/components/entidade";
 import { VerificarLogin, ConfirmarSenhaDoUsuarioLogado, CodificadorMD5 } from '~/components/util';
 import { elementosQuimicos118 } from "~/components/dado";
 import { getAllDados } from "~/components/DTO";
