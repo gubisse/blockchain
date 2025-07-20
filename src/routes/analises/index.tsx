@@ -52,8 +52,6 @@ export default component$(() => {
   const parametrosLoader = useGetParametros();
   const comprovativosLoader = useGetComprovativos();
 
-  const deleteCliente = useDeleteCliente();
-
   const addAnaliseAction = useAddAnalise();
   const editProformaAction = useEditProforma();
 

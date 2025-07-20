@@ -3,7 +3,7 @@ import { routeLoader$ } from '@builder.io/qwik-city';
 import { Header } from "~/components/Header";
 import { Footer } from "~/components/Footer";
 import type { Usuario, Cliente, Proforma, Parametro, Comprovativo, Deletar } from "~/components/entidade";
-import { VerificarLogin, AlegarRestauracao, ConfirmarSenhaDoUsuarioLogado, formatarDataMZ, CodificadorMD5 } from '~/components/util';
+import { VerificarLogin, ConfirmarSenhaDoUsuarioLogado, CodificadorMD5 } from '~/components/util';
 import { elementosQuimicos118 } from "~/components/dado";
 import { getAllDados } from "~/components/DTO";
 import {
@@ -86,19 +86,6 @@ export default component$(() => {
   const deleteProformasAction = useDeleteProformas();
   const deleteComprovativosAction = useDeleteComprovativos();
 
-  const state0 = useStore<{
-    form: {
-      deletar: Partial<Deletar>; 
-      erro: string;
-      mensagem: string;
-    }
-  }>({
-    form: {
-      deletar: {},
-      erro: "",
-      mensagem: "",
-    }
-  });
   const stateNovoUsuario = useStore<{
     form: {
       usuario: Partial<Usuario>; 
@@ -696,7 +683,7 @@ export default component$(() => {
                       carregando.value = false;
                       return;
                     }
-                    let senhaMD5 = CodificadorMD5(senhaAtual)
+                    const senhaMD5 = CodificadorMD5(senhaAtual)
                     // Confirmação da senha
                     stateNovaSenhaUsuario.form.usuario.senha = senhaMD5;
                     const resultado = await editUAction.submit(stateNovaSenhaUsuario.form.usuario as Record<string, unknown>);

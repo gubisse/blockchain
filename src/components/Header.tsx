@@ -1,6 +1,5 @@
 // src/components/Header.tsx
-import { component$, useSignal, useVisibleTask$, $, useStore } from '@builder.io/qwik';
-import { routeLoader$ } from '@builder.io/qwik-city';
+import { component$, useSignal, useVisibleTask$, useStore } from '@builder.io/qwik';
 import { AlegarLogin, VerificarLogin, formatarDataMZ } from '~/components/util';
 import type { Usuario } from '~/components/entidade';
 
@@ -10,8 +9,6 @@ export const HeaderLogin = component$(() => {
   const nome = useSignal('');
   const senha = useSignal('');
   const mensagem = useSignal('');
-
-  const confirmacao = useSignal('');
 
   const state = useStore<{
     form: {
