@@ -39,7 +39,7 @@ type DadosParaRelatorio = {
   proforma: Partial<Proforma>;
   parametros: Parametro[];
   analises: Analise[];
-  usuario: Partial<Analise>;
+  usuario: Partial<Usuario>;
 };
 
 // Interface para garantir compatibilidade com Parametro
