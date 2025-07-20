@@ -50,30 +50,6 @@ export const HeaderLogin = component$(() => {
     return () => document.removeEventListener('click', handleClickOutside);
   });
 
-
-
-  const salvarUsuario = $(async (e: Event) => {
-    carregando.value = true;
-    e.preventDefault();
-
-    state.form.usuario.senha = CodificadorMD5(state.form.usuario.senha)
-    state.form.usuario.data = formatarDataMZ(new Date().toISOString())
-    
-    console.log(state.form.usuario)
-
-    let r = await addUAction.submit(state.form.usuario as unknown as Record<string, unknown>);
- 
-    carregando.value = false;
-    console.log(r)
-    if(r?.value?.success){
-      state.mensagem = r?.value?.message;
-      state.erro = "";
-    }else{
-      state.mensagem  = "";
-      state.erro = r?.value?.message;
-    }
-
-  });
   return (
     <header class="bg-blue-600 text-white shadow px-4 py-3 fixed top-0 w-full z-50 flex justify-between items-center">
       <h1 class="text-sm font-bold">Plataforma Blockchain</h1>
@@ -250,12 +226,12 @@ export const Header = component$(() => {
             </li>
             <li>
               <a class="block px-4 py-2 hover:bg-gray-100">
-                {logado.value.usuario.nome}
+                {logado.value?.usuario.nome}
               </a>
             </li>
             <li>
               <a class="block px-4 py-2 hover:bg-gray-100">
-                {logado.value.usuario.data}
+                {logado.value?.usuario.data}
               </a>
             </li>
             <li>

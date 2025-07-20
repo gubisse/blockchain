@@ -2,7 +2,7 @@ import { component$, useSignal, useStore, $, useTask$, useVisibleTask$ } from "@
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { Header } from "~/components/Header";
 import { Footer } from "~/components/Footer";
-import type { Cliente, Proforma, Parametro, Comprovativo, Deletar } from "~/components/entidade";
+import type { Usuario, Cliente, Proforma, Parametro, Comprovativo, Deletar } from "~/components/entidade";
 import { VerificarLogin, AlegarRestauracao, ConfirmarSenhaDoUsuarioLogado, formatarDataMZ, CodificadorMD5 } from '~/components/util';
 import { elementosQuimicos118 } from "~/components/dado";
 import { getAllDados } from "~/components/DTO";
@@ -701,7 +701,7 @@ export default component$(() => {
                     const resultado = await editUAction.submit(stateNovaSenhaUsuario.form.usuario as Record<string, unknown>);
                     carregando.value = false;
 
-                    if (resultado.sucesso) {
+                    if (resultado.value?.sucesso) {
                       const login = VerificarLogin();
                       const objetoLogin = {
                         usuario: stateNovaSenhaUsuario.form.usuario,
@@ -710,10 +710,10 @@ export default component$(() => {
 
                       localStorage.setItem('login', JSON.stringify(objetoLogin));
 
-                      stateNovaSenhaUsuario.form.mensagem = resultado.mensagem;
+                      stateNovaSenhaUsuario.form.mensagem = resultado.value?.mensagem;
                       funNovaSenha.value = true;
                     } else {
-                      stateNovaSenhaUsuario.form.erro = resultado.mensagem;
+                      stateNovaSenhaUsuario.form.erro = resultado.value?.mensagem;
                     }
                   }}
                 >
