@@ -7,7 +7,12 @@ import html2canvas from 'html2canvas';
 import type { Usuario, Restauracao } from './entidade';
 import { getAllDados } from "./DTO";
 
-const USUARIOS_FIXOS: Usuario[] = await getAllDados<Usuario>('usuario');
+let USUARIOS_FIXOS: Usuario[] = [];
+
+(async () => {
+  USUARIOS_FIXOS = await getAllDados("usuario");
+})();
+
 
 
 export function formatarDataMZ(isoString: string): string {
