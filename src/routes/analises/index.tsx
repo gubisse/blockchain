@@ -7,15 +7,15 @@ import { elementosQuimicos118 } from "~/components/dado";
 import { getAllDados } from "~/components/DTO";
 import { formatarDataMZ, formatarDataHora } from "~/components/util";
 import { relatorioEmPDF2  } from "~/components/geradorRelatorio";
-import { createAddAnaliseAction, createEditProformaAction } from '~/lib/action';
-
-
+import { createAddAnaliseAction, createEditProformaAction, createDeleteByIdAction } from '~/lib/action';
 
 export const useGetClientes = routeLoader$(async () => getAllDados<Cliente>('cliente'));
 export const useGetProformas = routeLoader$(async () => getAllDados<Proforma>('proforma'));
 export const useGetParametros = routeLoader$(async () => getAllDados<Parametro>('parametro'));
 export const useGetAnalises = routeLoader$(async () => getAllDados<Analise>('analise'));
 export const useGetComprovativos = routeLoader$(async () => getAllDados<Comprovativo>('comprovativo'));
+
+export const useDeleteCliente = createDeleteByIdAction("cliente");
 
 export const useAddAnalise = createAddAnaliseAction<Analise>("analise")
 export const useEditProforma = createEditProformaAction<Proforma>("proforma")
@@ -51,6 +51,8 @@ export default component$(() => {
   const analisesLoader = useGetAnalises();
   const parametrosLoader = useGetParametros();
   const comprovativosLoader = useGetComprovativos();
+
+  const deleteCliente = useDeleteCliente();
 
   const addAnaliseAction = useAddAnalise();
   const editProformaAction = useEditProforma();

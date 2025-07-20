@@ -46,8 +46,19 @@ export interface Analise {
   data: string;
   campos: { [key: string]: string | number };
 }
+
 export interface Comprovativo {
   id: string;
   proforma: string;
   data: string;
+}
+
+export interface Restauracao {
+  sucesso: boolean;
+  mensagem: string;
+}
+
+export interface Deletar {
+  codigo: string;
+  confirmacao: string;
 }

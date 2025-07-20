@@ -1,11 +1,23 @@
-import { component$, useSignal, useStore, $, useTask$ } from "@builder.io/qwik";
+import { component$, useSignal, useStore, $, useTask$, useVisibleTask$ } from "@builder.io/qwik";
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { Header } from "~/components/Header";
 import { Footer } from "~/components/Footer";
-import type { Cliente, Proforma, Parametro, Comprovativo } from "~/components/entidade";
+import type { Cliente, Proforma, Parametro, Comprovativo, Deletar } from "~/components/entidade";
+import { VerificarLogin, AlegarRestauracao, ConfirmarSenhaDoUsuarioLogado, formatarDataMZ, CodificadorMD5 } from '~/components/util';
 import { elementosQuimicos118 } from "~/components/dado";
 import { getAllDados } from "~/components/DTO";
-import { createAddParametroAction, createEditParametroAction } from '~/lib/action';
+import {
+  createAddParametroAction,
+  createAddUsuarioAction,
+  createEditParametroAction,
+  createEditUsuarioAction,
+  createDeleteAllUoAction,
+  createDeleteAllAeAction,
+  createDeleteAllCeAction,
+  createDeleteAllPoAction,
+  createDeleteAllPaAction,
+  createDeleteAllCoAction
+} from '~/lib/action';
 
 interface FormState {
   id?: string;
@@ -38,11 +50,24 @@ export const useGetParametros = routeLoader$(() => getAllDados<Parametro>('param
 export const useGetComprovativos = routeLoader$(() => getAllDados<Comprovativo>('comprovativo'));
 
 export const useAddParametro = createAddParametroAction<Parametro>("parametro");
+export const useAddUsuario = createAddUsuarioAction<Usuario>("usuario");
 export const useEditParametro = createEditParametroAction<Parametro>("parametro");
+export const useEditUsuario = createEditUsuarioAction<Usuario>("usuario")
+
+export const useDeleteUsuarios = createDeleteAllUoAction('usuario');
+export const useDeleteClientes = createDeleteAllCeAction('cliente');
+export const useDeleteAnalises = createDeleteAllAeAction('analise');
+export const useDeleteParametros = createDeleteAllPoAction('parametro');
+export const useDeleteProformas = createDeleteAllPaAction('proforma');
+export const useDeleteComprovativos = createDeleteAllCoAction('comprovativo');
 
 export default component$(() => {
   const carregando = useSignal(false);
   const isSelected = useSignal<Partial<Parametro> | null>(null);
+
+  const funNovaSenha = useSignal(false);
+  const funNovoUsuario = useSignal(false);
+  const funRestaurarSys = useSignal(false);
 
   const clientesLoader = useGetClientes();
   const proformasLoader = useGetProformas();
@@ -50,8 +75,56 @@ export default component$(() => {
   const parametrosLoader = useGetParametros();
   
   const addPAction = useAddParametro();
+  const addUAction = useAddUsuario();
   const editPAction = useEditParametro();
+  const editUAction = useEditUsuario();
 
+  const deleteUsuariosAction = useDeleteUsuarios();
+  const deleteClientesAction = useDeleteClientes();
+  const deleteAnalisesAction = useDeleteAnalises();
+  const deleteParametrosAction = useDeleteParametros();
+  const deleteProformasAction = useDeleteProformas();
+  const deleteComprovativosAction = useDeleteComprovativos();
+
+  const state0 = useStore<{
+    form: {
+      deletar: Partial<Deletar>; 
+      erro: string;
+      mensagem: string;
+    }
+  }>({
+    form: {
+      deletar: {},
+      erro: "",
+      mensagem: "",
+    }
+  });
+  const stateNovoUsuario = useStore<{
+    form: {
+      usuario: Partial<Usuario>; 
+      erro: string;
+      mensagem: string;
+    }
+  }>({
+    form: {
+      usuario: {},
+      erro: "",
+      mensagem: "",
+    }
+  });
+  const stateNovaSenhaUsuario = useStore<{
+    form: {
+      usuario: Partial<Usuario>; 
+      erro: string;
+      mensagem: string;
+    }
+  }>({
+    form: {
+      usuario: {},
+      erro: "",
+      mensagem: "",
+    }
+  });
 
   const state = useStore<AppState>({
     clientes: [],
@@ -117,6 +190,16 @@ export default component$(() => {
         });
     }
   });
+
+  useVisibleTask$(async () => {
+    const login = VerificarLogin();
+
+    if (login?.usuario?.nome === "admin") {
+      funNovoUsuario.value = true;
+      funRestaurarSys.value = true;
+    }
+  });
+
 
   const testarFormula = $(() => {
     const { formula, teste } = state.form;
@@ -224,30 +307,49 @@ export default component$(() => {
     }
   });
 
+  const salvarUsuario = $(async (e: Event) => {
+    e.preventDefault(); // Impede recarregamento do formulário
+
+    carregando.value = true;
+
+    // Limpa mensagens anteriores
+    stateNovoUsuario.form.mensagem = "";
+    stateNovoUsuario.form.erro = "";
+
+    const usuario = stateNovoUsuario.form.usuario;
+
+    // Validação mínima
+    if (!usuario.nome?.trim() || !usuario.senha?.trim()) {
+      stateNovoUsuario.form.erro = "Nome e senha são obrigatórios.";
+      carregando.value = false;
+      return;
+    }
+
+    // Codifica a senha com MD5
+    usuario.senha = CodificadorMD5(usuario.senha.trim());
+
+    console.log("🔒 Usuário a salvar:", usuario);
+
+    // Submete via action
+    const r = await addUAction.submit(usuario as Record<string, unknown>);
+
+    carregando.value = false;
+
+    if (r?.value?.success) {
+      stateNovoUsuario.form.mensagem = r.value.message;
+    } else {
+      stateNovoUsuario.form.erro = r?.value?.message || "Erro ao salvar usuário.";
+    }
+
+    console.log("🧾 Resultado:", r);
+  });
+
+
   return (
     <>
       <Header />
       <main class="p-6 max-w-screen-lg mx-auto mt-10 space-y-8">
         <h2 class="text-2xl font-semibold uppercase text-gray-800">Configuração de Parâmetros</h2>
-
-        {carregando.value && (
-          <div class="bg-blue-100 border border-blue-400 text-blue-800 px-4 py-3 rounded flex items-center justify-center">
-            <div class="animate-spin rounded-full h-6 w-6 border-t-2 border-blue-500 mr-3"></div>
-            <p>Trabalhando...</p>
-          </div>
-        )}
-        {state.mensagem && (
-          <div class="bg-green-100 border border-green-400 text-green-800 px-4 py-3 rounded flex items-center justify-between">
-            <p>{state.mensagem}</p>
-            <button class="text-green-700 hover:text-green-900" onClick$={() => state.mensagem = ""}>✕</button>
-          </div>
-        )}
-        {state.erro && (
-          <div class="bg-red-100 border border-red-400 text-red-800 px-4 py-3 rounded flex items-center justify-between">
-            <p>{state.erro}</p>
-            <button class="text-red-700 hover:text-red-900" onClick$={() => state.erro = ""}>✕</button>
-          </div>
-        )}
 
         <div class="bg-white p-6 rounded-xl shadow-md">
           <h3 class="text-lg font-semibold mb-4 text-gray-700">
@@ -437,7 +539,364 @@ export default component$(() => {
             );
           })}
         </div>
+        <div class="hr"><hr/></div>
+        {funNovoUsuario.value && (
+        <div>
+          <p class="uppercase"><strong>Novo usuario</strong></p>
+          <p><strong>Esta funcionalidade pode ser executada, com a permissao do admin</strong></p>
+          <div>
+            <form
+              preventdefault:submit
+              onSubmit$={salvarUsuario}
+            >
+              <input
+                type="text"
+                onChange$={(e) => (stateNovoUsuario.form.usuario.nome = (e.target as HTMLSelectElement).value) }
+                placeholder="Usuario"
+                class="w-full border border-gray-300 px-3 py-2 rounded mb-3 focus:outline-none focus:ring-2 focus:ring-red-500"
+                aria-describedby="mensagem-erro"
+                maxLength={10}
+              />
+              <input
+                type="text"
+                onChange$={(e) => (stateNovoUsuario.form.usuario.senha = (e.target as HTMLSelectElement).value) }
+                placeholder="Senha"
+                class="w-full border border-gray-300 px-3 py-2 rounded mb-3 focus:outline-none focus:ring-2 focus:ring-red-500"
+                aria-describedby="mensagem-erro"
+                maxLength={20}
+              />
+              {stateNovoUsuario.form.mensagem && (
+                <div id="mensagem-erro" class="text-sm text-center text-green-500 mb-3">
+                  {stateNovoUsuario.form.mensagem}
+                </div>
+              )}
+              {stateNovoUsuario.form.erro && (
+                <div id="mensagem-erro" class="text-sm text-center text-red-500 mb-3">
+                  {stateNovoUsuario.form.erro}
+                </div>
+              )}
+              <div class="flex justify-end gap-2">
+                <button
+                  type="reset"
+                  class="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400 text-sm"
+                >
+                  Limpar
+                </button>
+                <button
+                  type="submit"
+                  class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 text-sm"
+                >
+                  Enviar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+        )}
+
+        <div class="hr"><hr/></div>
+        {!funNovaSenha.value && (
+        <div>
+          <p class="uppercase"><strong>Nova senha do usuario</strong></p>
+          <p><strong>Confirme sua senha para proceguir</strong></p>
+          <div>
+            <form
+              preventdefault:submit
+              onSubmit$={async () => {
+                carregando.value = true;
+
+                // Limpa mensagens anteriores
+                stateNovaSenhaUsuario.form.mensagem = '';
+                stateNovaSenhaUsuario.form.erro = '';
+
+                const senhaAtual = stateNovaSenhaUsuario.form.usuario.senha?.trim();
+
+                // Validação
+                if (!senhaAtual) {
+                  stateNovaSenhaUsuario.form.erro = "A senha atual é obrigatória.";
+                  carregando.value = false;
+                  return;
+                }
+
+                // Confirmação da senha
+                const resultado = await ConfirmarSenhaDoUsuarioLogado(senhaAtual);
+                carregando.value = false;
+
+                if (resultado.sucesso) {
+                  stateNovaSenhaUsuario.form.mensagem = resultado.mensagem;
+                  stateNovaSenhaUsuario.form.usuario = resultado.usuario;
+                  funNovaSenha.value = true;
+                } else {
+                  stateNovaSenhaUsuario.form.erro = resultado.mensagem;
+                }
+              }}
+            >
+              <input
+                type="password"
+                placeholder="Sua senha atual"
+                maxLength={24}
+                class="w-full border border-gray-300 px-3 py-2 rounded mb-3 focus:outline-none focus:ring-2 focus:ring-red-500"
+                onChange$={(e) =>
+                  (stateNovaSenhaUsuario.form.usuario.senha = (e.target as HTMLInputElement).value)
+                }
+                aria-describedby="mensagem-status"
+              />
+
+              {stateNovaSenhaUsuario.form.mensagem && (
+                <div id="mensagem-status" class="text-sm text-center text-green-600 mb-3">
+                  {stateNovaSenhaUsuario.form.mensagem}
+                </div>
+              )}
+              {stateNovaSenhaUsuario.form.erro && (
+                <div id="mensagem-status" class="text-sm text-center text-red-600 mb-3">
+                  {stateNovaSenhaUsuario.form.erro}
+                </div>
+              )}
+
+              <div class="flex justify-end gap-2">
+                <button
+                  type="button"
+                  class="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400 text-sm"
+                  onClick$={() => (funNovaSenha.value = false)}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 text-sm"
+                >
+                  Enviar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+        )}
+
+        {funNovaSenha.value && (
+          <div class="mb-4 p-2 text-sm text-green-700 bg-green-100 border border-green-300 rounded">
+            <div>
+              <p class="uppercase"><strong>Nova senha do usuario</strong></p>
+              <div>
+                <form
+                  preventdefault:submit
+                  onSubmit$={async () => {
+                    carregando.value = true;
+
+                    // Limpa mensagens anteriores
+                    stateNovaSenhaUsuario.form.mensagem = '';
+                    stateNovaSenhaUsuario.form.erro = '';
+
+                    const senhaAtual = stateNovaSenhaUsuario.form.usuario.senha?.trim();
+
+                    // Validação
+                    if (!senhaAtual) {
+                      stateNovaSenhaUsuario.form.erro = "A senha atual é obrigatória.";
+                      carregando.value = false;
+                      return;
+                    }
+                    let senhaMD5 = CodificadorMD5(senhaAtual)
+                    // Confirmação da senha
+                    stateNovaSenhaUsuario.form.usuario.senha = senhaMD5;
+                    const resultado = await editUAction.submit(stateNovaSenhaUsuario.form.usuario as Record<string, unknown>);
+                    carregando.value = false;
+
+                    if (resultado.sucesso) {
+                      const login = VerificarLogin();
+                      const objetoLogin = {
+                        usuario: stateNovaSenhaUsuario.form.usuario,
+                        data: login.data,
+                      };
+
+                      localStorage.setItem('login', JSON.stringify(objetoLogin));
+
+                      stateNovaSenhaUsuario.form.mensagem = resultado.mensagem;
+                      funNovaSenha.value = true;
+                    } else {
+                      stateNovaSenhaUsuario.form.erro = resultado.mensagem;
+                    }
+                  }}
+                >
+                  <input
+                    type="text"
+                    onChange$={(e) => (stateNovaSenhaUsuario.form.usuario.senha = (e.target as HTMLSelectElement).value) }
+                    placeholder="Nova senha"
+                    class="w-full border border-gray-300 px-3 py-2 rounded mb-3 focus:outline-none focus:ring-2 focus:ring-red-500"
+                    aria-describedby="mensagem-erro"
+                    maxLength={24}
+                  />
+                  {stateNovaSenhaUsuario.form.mensagem && (
+                    <div id="mensagem-erro" class="text-sm text-center text-green-500 mb-3">
+                      {stateNovaSenhaUsuario.form.mensagem}
+                    </div>
+                  )}
+                  {stateNovaSenhaUsuario.form.erro && (
+                    <div id="mensagem-erro" class="text-sm text-center text-red-500 mb-3">
+                      {stateNovaSenhaUsuario.form.erro}
+                    </div>
+                  )}
+                  <div class="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      class="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400 text-sm"
+                      onClick$={() => (funNovaSenha.value = false)}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 text-sm"
+                    >
+                      Enviar
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div class="hr"><hr/></div>
+        
+        {funRestaurarSys.value && (
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <button
+              class=" bg-red-900 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+              onClick$={async () => {
+                carregando.value = true;
+                const result = await deleteUsuariosAction.submit({});
+                carregando.value = false;
+                if (result?.value?.success) {
+                  state.mensagem = result?.value?.message;
+                } else {
+                  state.erro = result?.value?.message;
+                }
+
+              }}
+            >
+              Deletar usuarios
+            </button>
+            <button
+              class="bg-red-900 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+              onClick$={async () => {
+                carregando.value = true;
+                const result = await deleteComprovativosAction.submit({});
+                carregando.value = false;
+                if (result?.value?.success) {
+                  state.mensagem = result?.value?.message;
+                } else {
+                  state.erro = result?.value?.message;
+                }
+
+              }}
+            >
+              Deletar comprovativos
+            </button>
+            
+            <button
+              class="bg-red-900 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+              onClick$={async () => {
+                carregando.value = true;
+                const result = await deleteClientesAction.submit({});
+                carregando.value = false;
+                if (result?.value?.success) {
+                  state.mensagem = result?.value?.message;
+                } else {
+                  state.erro = result?.value?.message;
+                }
+
+              }}
+            >
+              Deletar clientes
+            </button>
+            <button
+              class="bg-red-900 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+              onClick$={async () => {
+                carregando.value = true;
+                const result = await deleteAnalisesAction.submit({});
+                carregando.value = false;
+                if (result?.value?.success) {
+                  state.mensagem = result?.value?.message;
+                } else {
+                  state.erro = result?.value?.message;
+                }
+
+              }}
+            >
+              Deletar analises
+            </button>
+            <button
+              class="bg-red-900 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+              onClick$={async () => {
+                carregando.value = true;
+                const result = await deleteParametrosAction.submit({});
+                carregando.value = false;
+                if (result?.value?.success) {
+                  state.mensagem = result?.value?.message;
+                } else {
+                  state.erro = result?.value?.message;
+                }
+
+              }}
+            >
+              Deletar parametros
+            </button>
+            <button
+              class="bg-red-900 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+              onClick$={async () => {
+                carregando.value = true;
+                const result = await deleteProformasAction.submit({});
+                carregando.value = false;
+                if (result?.value?.success) {
+                  state.mensagem = result?.value?.message;
+                } else {
+                  state.erro = result?.value?.message;
+                }
+
+              }}
+            >
+              Deletar proformas
+            </button>
+          </div>
+        )}
       </main>
+
+
+      {/* Modal de Mensagem */}
+      {carregando.value && (
+        <div class="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
+          <div class="bg-green-100 border border-green-400 text-green-800 px-6 py-4 rounded shadow-xl max-w-sm text-center relative">
+            {carregando.value && (
+              <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                <div class="bg-white p-8 rounded-2xl shadow-lg text-center w-full max-w-md">
+                  <p class="text-gray-600 mb-6">Trabalhando...</p>
+                  <div class="animate-spin rounded-full h-10 w-10 border-t-4 border-blue-500 border-solid mx-auto"></div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Mensagem */}
+      {state.mensagem && (
+        <div class="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
+          <div class="bg-green-100 border border-green-400 text-green-800 px-6 py-4 rounded shadow-xl max-w-sm text-center relative">
+            <button class="absolute top-2 right-2 text-green-700 hover:text-green-900" onClick$={() => state.mensagem = ""}>✕</button>
+            <p>{state.mensagem}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Erro */}
+      {state.erro && (
+        <div class="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
+          <div class="bg-red-100 border border-red-400 text-red-800 px-6 py-4 rounded shadow-xl max-w-sm text-center relative">
+            <button class="absolute top-2 right-2 text-red-700 hover:text-red-900" onClick$={() => state.erro = ""}>✕</button>
+            <p>{state.erro}</p>
+          </div>
+        </div>
+      )} 
       <Footer />
     </>
   );

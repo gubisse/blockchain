@@ -18,7 +18,6 @@ const parseDates = <T extends HasDateFields>(data: any): T => {
   return result as T;
 };
 
-
 const serializeDates = <T extends Record<string, any>>(data: T): T => {
   const result = { ...data };
 
@@ -34,7 +33,6 @@ const serializeDates = <T extends Record<string, any>>(data: T): T => {
 
   return result;
 };
-
 
 export async function getAllDados<T extends HasDateFields>(collection: string): Promise<T[]> {
   try {
@@ -71,6 +69,7 @@ export async function updateDado<T extends HasDateFields>(collection: string, id
     throw new Error(`Falha ao atualizar em ${collection}`);
   }
 }
+
 export async function updateDadoEstoque<T extends HasDateFields>(collection: string, compra: string, updatedData: Partial<T>): Promise<void> {
   try {
     const serializedData = serializeDates(updatedData);
@@ -82,5 +81,30 @@ export async function updateDadoEstoque<T extends HasDateFields>(collection: str
   } catch (error) {
     console.error(`Erro ao atualizar em ${collection}:`, error);
     throw new Error(`Falha ao atualizar em ${collection}`);
+  }
+}
+
+export async function deletarPorId(collection: string, id: string): Promise<void> {
+  try {
+    const { error } = await supabase.from(collection).delete().eq('id', id);
+    if (error) throw error;
+  } catch (error) {
+    throw new Error(`Erro ao deletar registro de ${collection} com ID ${id}`);
+  }
+}
+
+// Função para deletar todos os dados de uma coleção no Supabase
+export async function deletarTodosDados(collection: string): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from(collection)
+      .delete()
+      .not('id', 'is', null); // Garante cláusula WHERE
+
+    if (error) throw error;
+
+  } catch (error) {
+    console.error(`Erro ao deletar todos os dados de ${collection}:`, error);
+    throw new Error(`Falha ao deletar de ${collection}`);
   }
 }

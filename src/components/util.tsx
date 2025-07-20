@@ -4,10 +4,11 @@ import md5 from 'blueimp-md5';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
-import type { Usuario } from './entidade';
-import { usuarios } from "./dado";
+import type { Usuario, Restauracao } from './entidade';
+import { getAllDados } from "./DTO";
 
-const USUARIOS_FIXOS: Usuario[] = usuarios;
+const USUARIOS_FIXOS: Usuario[] = await getAllDados<Usuario>('usuario');
+
 
 export function formatarDataMZ(isoString: string): string {
   const data = new Date(isoString);
@@ -21,7 +22,23 @@ export function formatarDataMZ(isoString: string): string {
     timeZone: 'Africa/Maputo',
   });
 }
+export const formatarDataHora = (iso: string | undefined | null) => {
+  if (!iso) return 'Data inválida';
+  const data = new Date(iso);
+  console.log(iso)
+  if (isNaN(data.getTime())) return 'Data inválida';
+  return data.toLocaleString('pt-MZ', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).replace(',', '');
+};
 
+export const CodificadorMD5 = (codigo: string) => {
+  return md5(codigo.trim());
+}
 
 export const AlegarLogin = $(async (nome: string, senha: string) => {
   const usuario = USUARIOS_FIXOS.find(u => u.nome === nome.trim());
@@ -45,6 +62,52 @@ export const AlegarLogin = $(async (nome: string, senha: string) => {
 
   return { sucesso: true, mensagem: 'Login efetuado com sucesso.', usuario: objetoLogin };
 });
+
+
+export const ConfirmarSenhaDoUsuarioLogado = $(async (senha: string) => {
+  // 1. Recupera os dados armazenados no localStorage
+  const loginStr = localStorage.getItem('login');
+
+  console.log("Usuarios:\n\n",USUARIOS_FIXOS)
+
+  if (!loginStr) {
+    return { sucesso: false, mensagem: 'Nenhum login encontrado no dispositivo.' };
+  }
+
+  let loginData;
+  try {
+    loginData = JSON.parse(loginStr);
+  } catch (e) {
+    return { sucesso: false, mensagem: 'Dados de login corrompidos.' };
+  }
+  console.log(loginData)
+  const nome = loginData?.usuario?.nome;
+  const senhaSalva = loginData?.usuario?.senha;
+
+  if (!nome || !senhaSalva) {
+    return { sucesso: false, mensagem: 'Usuário ou senha ausentes nos dados armazenados.' };
+  }
+
+  // 2. Busca o usuário na lista fixa
+  const usuario = USUARIOS_FIXOS.find(u => u.nome === nome.trim());
+  if (!usuario) {
+    return { sucesso: false, mensagem: 'Usuário não encontrado nos registros fixos.' };
+  }
+
+  // 3. Compara senha digitada com a do sistema
+  const senhaDigitada = md5(senha.trim());
+
+  if (usuario.senha !== senhaDigitada) {
+    return { sucesso: false, mensagem: 'Senha incorreta.' };
+  }
+
+  return {
+    sucesso: true,
+    mensagem: 'Senha confirmada com sucesso.',
+    usuario,
+  };
+});
+
 
 export const VerificarLogin = () => {
   const login = localStorage.getItem('login');
@@ -126,20 +189,6 @@ export const GerarPDF: QRL<() => void> = $(() => {
     });
 });
 
-export const formatarDataHora = (iso: string | undefined | null) => {
-  if (!iso) return 'Data inválida';
-  const data = new Date(iso);
-  console.log(iso)
-  if (isNaN(data.getTime())) return 'Data inválida';
-  return data.toLocaleString('pt-MZ', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).replace(',', '');
-};
-
 // Função para avaliar expressões matemáticas simples
 export const evaluateExpression = (expression: string): number => {
   try {
@@ -152,3 +201,28 @@ export const evaluateExpression = (expression: string): number => {
     return NaN;
   }
 };
+
+// src/services/restaurar.ts
+export async function AlegarRestauracao(codigo: string): Promise<Restauracao> {
+  // 1. Validação básica
+  const codigoLimpo = codigo.trim();
+
+  if (!codigoLimpo) {
+    return { sucesso: false, mensagem: 'O código não pode estar vazio.' };
+  }
+  /*
+  if (codigoLimpo.length !== 24) {
+    return { sucesso: false, mensagem: 'O código deve conter exatamente 24 letras.' };
+  }
+  */
+  // 2. Lógica de verificação (aqui você pode buscar no banco de dados, arquivos, etc.)
+  // Simulação: um código fictício aceito
+  const codigoAutorizado = 'A' // 'ABCDEFGHIJKLMNOPQRSTUVWX'; // 24 letras
+
+  if (codigoLimpo.toUpperCase() === codigoAutorizado) {
+    // Simule alguma lógica de restauração se necessário
+    return { sucesso: true, mensagem: 'Sistema liberado para a restauracao.' };
+  }
+
+  return { sucesso: false, mensagem: 'Código inválido. Tente novamente.' };
+}

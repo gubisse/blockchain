@@ -1,14 +1,35 @@
 // src/components/Header.tsx
-import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
+import { component$, useSignal, useVisibleTask$, $, useStore } from '@builder.io/qwik';
+import { routeLoader$ } from '@builder.io/qwik-city';
 import { AlegarLogin, VerificarLogin, formatarDataMZ } from '~/components/util';
 import type { Usuario } from '~/components/entidade';
 
-
 export const HeaderLogin = component$(() => {
+  const carregando = useSignal(false);
   const mostrarMenu = useSignal(false);
   const nome = useSignal('');
   const senha = useSignal('');
   const mensagem = useSignal('');
+
+  const confirmacao = useSignal('');
+
+  const state = useStore<{
+    form: {
+      usuario: Partial<Usuario>;
+      erro: string;
+      mensagem: string;
+    };
+    erro: string;
+    mensagem: string;
+  }>({
+    form: {
+      usuario: {},
+      erro: "",
+      mensagem: "",
+    },
+    erro: "",
+    mensagem: "",
+  });
 
   useVisibleTask$(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -29,6 +50,30 @@ export const HeaderLogin = component$(() => {
     return () => document.removeEventListener('click', handleClickOutside);
   });
 
+
+
+  const salvarUsuario = $(async (e: Event) => {
+    carregando.value = true;
+    e.preventDefault();
+
+    state.form.usuario.senha = CodificadorMD5(state.form.usuario.senha)
+    state.form.usuario.data = formatarDataMZ(new Date().toISOString())
+    
+    console.log(state.form.usuario)
+
+    let r = await addUAction.submit(state.form.usuario as unknown as Record<string, unknown>);
+ 
+    carregando.value = false;
+    console.log(r)
+    if(r?.value?.success){
+      state.mensagem = r?.value?.message;
+      state.erro = "";
+    }else{
+      state.mensagem  = "";
+      state.erro = r?.value?.message;
+    }
+
+  });
   return (
     <header class="bg-blue-600 text-white shadow px-4 py-3 fixed top-0 w-full z-50 flex justify-between items-center">
       <h1 class="text-sm font-bold">Plataforma Blockchain</h1>
@@ -97,18 +142,58 @@ export const HeaderLogin = component$(() => {
               {mensagem.value && (
                 <div class="text-sm text-red-600 mb-2">{mensagem.value}</div>
               )}
-              <div class="text-right">
+              <div class="flex justify-between">
                 <button
                   type="submit"
-                  class="bg-blue-500 text-white px-4 py-2 rounded text-sm hover:bg-blue-600"
+                  class="bg-green-500 text-white px-4 py-2 rounded text-sm hover:bg-green-600"
                 >
                   Entrar
                 </button>
+
               </div>
+
             </form>
           </div>
         )}
       </div>
+
+
+      {/* Modal de Mensagem */}
+      {carregando.value && (
+        <div class="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
+          <div class="bg-green-100 border border-green-400 text-green-800 px-6 py-4 rounded shadow-xl max-w-sm text-center relative">
+            {carregando.value && (
+              <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                <div class="bg-white p-8 rounded-2xl shadow-lg text-center w-full max-w-md">
+                  <p class="text-gray-600 mb-6">{state.form.mensagem}</p>
+                  <p class="text-gray-600 mb-6">{state.form.erro}</p>
+                  <div class="animate-spin rounded-full h-10 w-10 border-t-4 border-blue-500 border-solid mx-auto"></div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Mensagem */}
+      {state.mensagem && (
+        <div class="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
+          <div class="bg-green-100 border border-green-400 text-green-800 px-6 py-4 rounded shadow-xl max-w-sm text-center relative">
+            <button class="absolute top-2 right-2 text-green-700 hover:text-green-900" onClick$={() => state.mensagem = ""}>✕</button>
+            <p>{state.mensagem}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Erro */}
+      {state.erro && (
+        <div class="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
+          <div class="bg-red-100 border border-red-400 text-red-800 px-6 py-4 rounded shadow-xl max-w-sm text-center relative">
+            <button class="absolute top-2 right-2 text-red-700 hover:text-red-900" onClick$={() => state.erro = ""}>✕</button>
+            <p>{state.erro}</p>
+          </div>
+        </div>
+      )}  
     </header>
   );
 });
@@ -164,6 +249,19 @@ export const Header = component$(() => {
               <hr class="my-1 border-t border-gray-200" />
             </li>
             <li>
+              <a class="block px-4 py-2 hover:bg-gray-100">
+                {logado.value.usuario.nome}
+              </a>
+            </li>
+            <li>
+              <a class="block px-4 py-2 hover:bg-gray-100">
+                {logado.value.usuario.data}
+              </a>
+            </li>
+            <li>
+              <hr class="my-1 border-t border-gray-200" />
+            </li>
+            <li>
               <a
                 href="/tlogin"
                 class="block px-4 py-2 text-red-600 hover:bg-red-50"
@@ -174,6 +272,11 @@ export const Header = component$(() => {
           </ul>
         )}
       </div>
+      
+
     </header>
+
+
+
   );
 });

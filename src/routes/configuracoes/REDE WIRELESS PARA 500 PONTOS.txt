@@ -1,0 +1,17 @@
+REDE WIRELESS PARA 500 PONTOS
+
+* Roteador empresarial - TP-Link Omada ER7206
+* Switch 16 portas - TP-Link TL-SG1218MP (PoE)
+* 10 Acess points - TP-Link Omada EAP660 HD
+* 400 Metros de CAT6
+* Rack - Padrao 19 inch
+* Controlador - TP-Link Omada OC200 ou OC300
+* Patch Panel
+* 2 UPS
+* 20 Calhas 40mm x 40mm
+* 50 Metros de tubo anelado
+* 30 Botas para RJ45
+* 40 Conector RJ45
+* 40 Etiquetas para pontos CAT6
+* Pacote de buchas 8mm
+* 4 Buchas de ferro
