@@ -625,6 +625,7 @@ export default component$(() => {
                 if (resultado?.sucesso) {
                   stateNovaSenhaUsuario.form.mensagem = resultado?.mensagem;
                   stateNovaSenhaUsuario.form.usuario = resultado?.usuario;
+                  console.log("Cofffiiii:\n\n",resultado?.usuario)
                   funNovaSenha.value = true;
                 } else {
                   stateNovaSenhaUsuario.form.erro = resultado?.mensagem;
