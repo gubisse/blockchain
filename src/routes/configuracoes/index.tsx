@@ -624,8 +624,8 @@ export default component$(() => {
 
                 if (resultado?.sucesso) {
                   stateNovaSenhaUsuario.form.mensagem = resultado?.mensagem;
-                  stateNovaSenhaUsuario.form.usuario = resultado?.usuario;
-                  console.log("Cofffiiii:\n\n",resultado?.usuario)
+                  stateNovaSenhaUsuario.form.usuario = resultado?.usuario ?? {};
+
                   funNovaSenha.value = true;
                 } else {
                   stateNovaSenhaUsuario.form.erro = resultado?.mensagem;
@@ -702,7 +702,7 @@ export default component$(() => {
                     const resultado = await editUAction.submit(stateNovaSenhaUsuario.form.usuario as Record<string, unknown>);
                     carregando.value = false;
 
-                    if (resultado.value?.sucesso) {
+                    if (resultado.value?.success) {
                       const login = VerificarLogin();
                       const objetoLogin = {
                         usuario: stateNovaSenhaUsuario.form.usuario,
@@ -711,10 +711,10 @@ export default component$(() => {
 
                       localStorage.setItem('login', JSON.stringify(objetoLogin));
 
-                      stateNovaSenhaUsuario.form.mensagem = resultado.value?.mensagem;
+                      stateNovaSenhaUsuario.form.mensagem = resultado.value?.message;
                       funNovaSenha.value = true;
                     } else {
-                      stateNovaSenhaUsuario.form.erro = resultado.value?.mensagem;
+                      stateNovaSenhaUsuario.form.erro = resultado.value?.message;
                     }
                   }}
                 >
