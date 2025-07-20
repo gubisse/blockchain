@@ -226,12 +226,12 @@ export const Header = component$(() => {
             </li>
             <li>
               <a class="block px-4 py-2 hover:bg-gray-100">
-                {logado.value?.usuario.nome}
+                {logado.value?.nome}
               </a>
             </li>
             <li>
               <a class="block px-4 py-2 hover:bg-gray-100">
-                {logado.value?.usuario.data}
+                {logado.value?.data}
               </a>
             </li>
             <li>

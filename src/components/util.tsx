@@ -71,34 +71,34 @@ export const ConfirmarSenhaDoUsuarioLogado = $(async (senha: string) => {
   console.log("Usuarios:\n\n",USUARIOS_FIXOS)
 
   if (!loginStr) {
-    return { sucesso: false, mensagem: 'Nenhum login encontrado no dispositivo.' };
+    return { sucesso: false, mensagem: 'Nenhum login encontrado no dispositivo.', usuario: [] };
   }
 
   let loginData;
   try {
     loginData = JSON.parse(loginStr);
   } catch (e) {
-    return { sucesso: false, mensagem: 'Dados de login corrompidos.' };
+    return { sucesso: false, mensagem: 'Dados de login corrompidos.', usuario: [] };
   }
   console.log(loginData)
   const nome = loginData?.usuario?.nome;
   const senhaSalva = loginData?.usuario?.senha;
 
   if (!nome || !senhaSalva) {
-    return { sucesso: false, mensagem: 'Usuário ou senha ausentes nos dados armazenados.' };
+    return { sucesso: false, mensagem: 'Usuário ou senha ausentes nos dados armazenados.', usuario: [] };
   }
 
   // 2. Busca o usuário na lista fixa
   const usuario = USUARIOS_FIXOS.find(u => u.nome === nome.trim());
   if (!usuario) {
-    return { sucesso: false, mensagem: 'Usuário não encontrado nos registros fixos.' };
+    return { sucesso: false, mensagem: 'Usuário não encontrado nos registros fixos.', usuario: [] };
   }
 
   // 3. Compara senha digitada com a do sistema
   const senhaDigitada = md5(senha.trim());
 
   if (usuario.senha !== senhaDigitada) {
-    return { sucesso: false, mensagem: 'Senha incorreta.' };
+    return { sucesso: false, mensagem: 'Senha incorreta.', usuario: [] };
   }
 
   return {

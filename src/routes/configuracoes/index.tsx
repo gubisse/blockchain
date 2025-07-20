@@ -622,12 +622,12 @@ export default component$(() => {
                 const resultado = await ConfirmarSenhaDoUsuarioLogado(senhaAtual);
                 carregando.value = false;
 
-                if (resultado.sucesso) {
-                  stateNovaSenhaUsuario.form.mensagem = resultado.mensagem;
-                  stateNovaSenhaUsuario.form.usuario = resultado.usuario;
+                if (resultado?.sucesso) {
+                  stateNovaSenhaUsuario.form.mensagem = resultado?.mensagem;
+                  stateNovaSenhaUsuario.form.usuario = resultado?.usuario;
                   funNovaSenha.value = true;
                 } else {
-                  stateNovaSenhaUsuario.form.erro = resultado.mensagem;
+                  stateNovaSenhaUsuario.form.erro = resultado?.mensagem;
                 }
               }}
             >
