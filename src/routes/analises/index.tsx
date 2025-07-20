@@ -266,7 +266,7 @@ export default component$(() => {
         }),
         {}
       ),
-      usuario: logado.value?.usuario.id
+      usuario: logado.value?.id
     };
 
     const r = await addAnaliseAction.submit(novaAnalise as unknown as Record<string, unknown>);
@@ -701,7 +701,7 @@ export default component$(() => {
                     state.dadosParaRelatorio.proforma = isSelected.value || {};
                     state.dadosParaRelatorio.parametros = state.parametros;
                     state.dadosParaRelatorio.analises = state.analises;
-                    state.dadosParaRelatorio.usuario = logado.value?.usuario;
+                    state.dadosParaRelatorio.usuario = logado.value;
                     gerarRelatorioPDF();
                   }}
                   class="mt-4 bg-blue-600 text-white px-4 py-2 rounded"
