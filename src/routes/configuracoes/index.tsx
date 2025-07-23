@@ -11,7 +11,6 @@ import {
   createAddUsuarioAction,
   createEditParametroAction,
   createEditUsuarioAction,
-  createDeleteAllUoAction,
   createDeleteAllAeAction,
   createDeleteAllCeAction,
   createDeleteAllPoAction,
@@ -54,7 +53,6 @@ export const useAddUsuario = createAddUsuarioAction<Usuario>("usuario");
 export const useEditParametro = createEditParametroAction<Parametro>("parametro");
 export const useEditUsuario = createEditUsuarioAction<Usuario>("usuario")
 
-export const useDeleteUsuarios = createDeleteAllUoAction('usuario');
 export const useDeleteClientes = createDeleteAllCeAction('cliente');
 export const useDeleteAnalises = createDeleteAllAeAction('analise');
 export const useDeleteParametros = createDeleteAllPoAction('parametro');
@@ -79,7 +77,6 @@ export default component$(() => {
   const editPAction = useEditParametro();
   const editUAction = useEditUsuario();
 
-  const deleteUsuariosAction = useDeleteUsuarios();
   const deleteClientesAction = useDeleteClientes();
   const deleteAnalisesAction = useDeleteAnalises();
   const deleteParametrosAction = useDeleteParametros();
@@ -748,22 +745,7 @@ export default component$(() => {
         
         {funRestaurarSys.value && (
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <button
-              class=" bg-red-900 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
-              onClick$={async () => {
-                carregando.value = true;
-                const result = await deleteUsuariosAction.submit({});
-                carregando.value = false;
-                if (result?.value?.success) {
-                  state.mensagem = result?.value?.message;
-                } else {
-                  state.erro = result?.value?.message;
-                }
-
-              }}
-            >
-              Deletar usuarios
-            </button>
+            
             <button
               class="bg-red-900 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
               onClick$={async () => {
