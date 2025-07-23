@@ -180,7 +180,8 @@ export const Header = component$(() => {
 
   // Verifica o login no lado do cliente
   useVisibleTask$(async () => {
-    logado.value = await VerificarLogin();
+    const logar = await VerificarLogin();
+    logado.value = logar.usuario;
   });
 
   return (
@@ -228,7 +229,7 @@ export const Header = component$(() => {
             </li>
             <li>
               <a class="block px-4 py-2 hover:bg-gray-100">
-                {logado.value?.data}
+                {formatarDataMZ(logado.value?.data || "")}
               </a>
             </li>
             <li>

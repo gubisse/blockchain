@@ -109,6 +109,7 @@ export default component$(() => {
       }, 6000);
     }
   });
+
   useTask$(({ track }) => {
     track(() => state.form.proforma.nome);
     if (state.form.proforma.nome) {
@@ -117,7 +118,6 @@ export default component$(() => {
       state.form.proforma.totalpagar = 0
     }
   });
-
 
   const parametroSelecionadoTipadorFormProforma = $((dado: any, marcado: boolean) => {
     const id = String(dado.id);
@@ -177,6 +177,8 @@ export default component$(() => {
         data: dados.data as string,
 
       });
+
+      console.log("Cliente cadastrados:\n",dados)
 
     }else{
       state.mensagem  = "";
@@ -443,15 +445,7 @@ return (
                   <button
                     class="bg-red-900 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
                     onClick$={async () => {
-                      carregando.value = true;
-                      const result = await deleteCliente.submit({ id: c.id });
-                      carregando.value = false;
-                      if (result?.value?.success) {
-                        state.mensagem = result?.value?.message;
-                      } else {
-                        state.erro = result?.value?.message;
-                      }
-
+                      state.erro = "Nao é possível eliminar, vai contra as normas desde sistema.";
                     }}
                   >
                     Deletar cliente

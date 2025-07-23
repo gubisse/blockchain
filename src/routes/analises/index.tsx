@@ -232,102 +232,88 @@ export default component$(() => {
     }
   });
 
-  // Adicionar analise na BD
-  const addAnalise = $( async (e: Event) => {
-    e.preventDefault();
-    
-    carregando.value = true
-    
+  // Função para adicionar uma nova análise
+  const addAnalise = $(async (e: Event) => {
+    e.preventDefault(); // Impede o recarregamento da página após o submit
+    carregando.value = true; // Ativa o indicador de carregamento
+
+    // Captura os dados do formulário
     const form = e.target as HTMLFormElement;
     const dados = Object.fromEntries(new FormData(form).entries());
 
+    // ID da proforma e parâmetro selecionado no formulário
     const proformaId = state.form.analise.proforma!;
     const parametro = state.form.analise.parametro!;
 
-    // Verifica se já existe uma análise com a mesma proforma e parâmetro
+    // Verifica se já existe uma análise para essa proforma e esse parâmetro
     const jaExiste = state.analises.some(
       (a) => a.proforma === proformaId && a.parametro === parametro
     );
     if (jaExiste) {
-      carregando.value = false
+      carregando.value = false;
       state.erro = "Já existe uma análise com esta proforma e este parâmetro.";
-      return;
+      return; // Interrompe se já existir
     }
 
+    // Monta o objeto novaAnalise com os campos necessários
     const novaAnalise: Analise = {
       proforma: proformaId,
       parametro,
-      valorfinal: state.resultadoFormulaPreenchida,
-      data: new Date().toISOString(),
+      valorfinal: state.resultadoFormulaPreenchida, // resultado calculado
+      data: new Date().toISOString(), // data atual no formato ISO
       campos: state.camposNecessarios.reduce(
-        (acc, campo) => ({
-          ...acc,
-          [campo]: Number(dados[campo]) || 0,
-        }),
-        {}
+        (acc, campo) => ({ ...acc, [campo]: Number(dados[campo]) || 0 }),
+        {} // objeto com os campos preenchidos convertidos em números
       ),
-      usuario: logado.value?.id || '' 
+      usuario: logado.value?.id || '' // ID do usuário logado
     };
 
+    // Envia a nova análise para o backend
     const r = await addAnaliseAction.submit(novaAnalise as unknown as Record<string, unknown>);
-    
-    // Atualiza o estado da proforma para "analisada"
-    const proformaFind = state.proformas.find((p) => p.id === proformaId);
-    if (!r?.value?.success) {      
-      carregando.value = false
-      state.erro = r?.value?.message;
+    if (!r?.value?.success) {
+      carregando.value = false;
+      state.erro = r?.value?.message; // Exibe erro, se houver
       return;
     }
+    state.analises.push(novaAnalise)
+
+    // Busca a proforma correspondente para atualizar seu estado
+    const proformaFind = state.proformas.find((p) => p.id === proformaId);
     if (proformaFind) {
+      // Lista de parâmetros esperados (definidos na proforma)
       const esperados = proformaFind.parametros
-        .split(",")
-        .map((p) => p.trim())
-        .filter((p) => p); // remove vazios, se houver
+        .split(",") // separa por vírgula
+        .map(p => p.trim()) // remove espaços
+        .filter(Boolean); // remove strings vazias
 
+      // Parâmetros que já foram analisados
       const analisados = state.analises
-        .filter((a) => a.proforma === proformaId)
-        .map((a) => a.parametro);
+        .filter(a => a.proforma === proformaId)
+        .map(a => a.parametro);
 
-      const naoAnalisados = esperados.filter((param) => !analisados.includes(param));
-      const todosAnalisados = naoAnalisados.length === 0;
-
-      proformaFind.estado = todosAnalisados ? "completa" : "incompleta";
-
-      let estadoFinal = "";
-      if (analisados.length === 0 && proformaFind.estado === "incompleta" ) {
-        estadoFinal = "pendente";
-      }else if(analisados.length !== 0 && proformaFind.estado === "incompleta" ){
-        estadoFinal = "incompleta";
-      }else if(analisados.length !== 0 && proformaFind.estado === "completa" ){
-        estadoFinal = "completa";
+      // Define o estado da proforma conforme a situação das análises
+      let estadoFinal = "Pendente";
+      if (analisados.length > 0) {
+        const faltando = esperados.filter(p => !analisados.includes(p));
+        estadoFinal = faltando.length === 0 ? "Completa" : "inCompleta";
       }
-      proformaFind.estado = estadoFinal;
-      
-      const rep = await editProformaAction.submit(proformaFind as unknown as Record<string, unknown>);
+      proformaFind.estado = estadoFinal; // Atualiza o estado da proforma
 
-      if (!rep?.value?.success) {      
-        carregando.value = false
-        state.erro = r?.value?.message;
+      // Envia a proforma atualizada para o backend
+      const rep = await editProformaAction.submit(proformaFind as unknown as Record<string, unknown>);
+      if (!rep?.value?.success) {
+        carregando.value = false;
+        state.erro = rep?.value?.message; // Exibe erro, se houver
         return;
       }
-      /*console.log(
-        "%c[DEBUG ANALISE PROFORMA]",
-        "color: blue; font-weight: bold;",
-        {
-          esperados,
-          analisados,
-          naoAnalisados,
-          proformaAtualizado: proformaFind,
-          analiseNovaResposta: r,
-          proformaAtualizadoResposta: rep,
-
-        }
-      );*/
     }
-    form.reset();
-    carregando.value = false
-    state.mensagem = "Análise salva com sucesso!";
+
+    form.reset(); // Limpa o formulário
+    carregando.value = false; // Desativa o carregamento
+    state.mensagem = "Análise salva com sucesso!"; // Mensagem de sucesso
   });
+
+
 
 
   // Filtragem e paginação
@@ -336,7 +322,7 @@ export default component$(() => {
 
     const proformasValidas = state.proformas.filter(
       (proforma) =>
-        proforma.estado === "completa" &&
+        (proforma.estado === "Completa" || proforma.estado === "inCompleta") &&
         state.comprovativos.some((c) => c.proforma === proforma.id)
     );
 
@@ -417,7 +403,7 @@ export default component$(() => {
 
                 {state.proformas
                   .filter((proforma) =>
-                    proforma.estado !== "completa" &&
+                    proforma.estado !== "Completa" &&
                     state.comprovativos.some((c) => c.proforma === proforma.id)
                   )
                   .map((proforma) => {
