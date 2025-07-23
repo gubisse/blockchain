@@ -6,7 +6,7 @@ import type { Cliente, Proforma, Parametro, Comprovativo } from "~/components/en
 import { elementosQuimicos118 } from "~/components/dado";
 import { getAllDados } from "~/components/DTO";
 import { formatarDataHora } from "~/components/util";
-import { createAddClienteAction, createEditClienteAction, createAddProformaAction, createAddComprovativoAction, createDeleteByIdAction  } from '~/lib/action';
+import { createAddClienteAction, createEditClienteAction, createAddProformaAction, createAddComprovativoAction  } from '~/lib/action';
 
 export const useGetClientes = routeLoader$(async () => getAllDados<Cliente>('cliente'));
 export const useGetProformas = routeLoader$(async () => getAllDados<Proforma>('proforma'));
@@ -18,8 +18,6 @@ export const useAddProforma = createAddProformaAction<Proforma>("proforma")
 export const useAddComprovativo = createAddComprovativoAction<Comprovativo>("comprovativo")
 
 export const useEditCliente = createEditClienteAction<Cliente>("cliente")
-
-export const useDeleteCliente = createDeleteByIdAction("cliente");
 
 export default component$(() => {
   
@@ -43,8 +41,6 @@ export default component$(() => {
   const addPAction = useAddProforma();
   const addCPAction = useAddComprovativo();
   const editCAction = useEditCliente();
-
-  const deleteCliente = useDeleteCliente();
 
   const state = useStore<{
     clientes: Partial<Cliente>[];
