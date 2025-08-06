@@ -177,18 +177,22 @@ export const Header = component$(() => {
   const mostrarMenu = useSignal(false);
 
   const logado = useSignal<Usuario | null>(null);
+  const logadoData = useSignal<string | null>(null);
 
   // Verifica o login no lado do cliente
   useVisibleTask$(async () => {
     const logar = await VerificarLogin();
     logado.value = logar.usuario;
+    logadoData.value = logar.data;
+
+    console.log("Logado",logado.value)
   });
 
   return (
     <header class="bg-blue-600 text-white shadow px-4 py-3 fixed top-0 w-full z-50 flex justify-between items-center">
       <h1 class="text-sm font-bold">Plataforma Blockchain</h1>
       <h1 class="text-sm font-bold">
-        {"Data e hora do acesso: " + formatarDataMZ(logado.value?.data || "")}
+        {"Data e hora do acesso: " + formatarDataMZ(logadoData.value || "")}
       </h1>
 
 

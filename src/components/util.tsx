@@ -60,10 +60,9 @@ export const AlegarLogin = $(async (nome: string, senha: string) => {
 
   const objetoLogin = {
     usuario: usuario,
-    data: new Date().toISOString(),
+    data: new Date()
   };
-
-  localStorage.setItem('login', JSON.stringify(objetoLogin));
+  localStorage.setItem('login-blockchain-merdi-mutombo', JSON.stringify(objetoLogin));
 
   return { sucesso: true, mensagem: 'Login efetuado com sucesso.', usuario: objetoLogin };
 });
@@ -71,7 +70,7 @@ export const AlegarLogin = $(async (nome: string, senha: string) => {
 
 export const ConfirmarSenhaDoUsuarioLogado = $(async (senha: string) => {
   // 1. Recupera os dados armazenados no localStorage
-  const loginStr = localStorage.getItem('login');
+  const loginStr = localStorage.getItem('login-blockchain-merdi-mutombo');
 
   console.log("Usuarios:\n\n",USUARIOS_FIXOS)
 
@@ -115,7 +114,7 @@ export const ConfirmarSenhaDoUsuarioLogado = $(async (senha: string) => {
 
 
 export const VerificarLogin = () => {
-  const login = localStorage.getItem('login');
+  const login = localStorage.getItem('login-blockchain-merdi-mutombo');
   if (!login) return null;
 
   try {
@@ -128,7 +127,7 @@ export const VerificarLogin = () => {
 
 
 export const TerminarLogin = $(() => {
-  localStorage.removeItem('login');
+  localStorage.removeItem('login-blockchain-merdi-mutombo');
   return true;
 });
 
