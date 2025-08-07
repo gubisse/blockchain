@@ -225,11 +225,20 @@ export default component$(() => {
     const form = e.target as HTMLFormElement;
     const dados = Object.fromEntries(new FormData(form).entries());
 
-    const now = new Date();
-    const dataFormatada = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
     dados.proforma = proformaId || "";
-    dados.data = dataFormatada;
+
+    const agora = new Date();
+
+    const dia = agora.getDate().toString().padStart(2, "0");
+    const mes = (agora.getMonth() + 1).toString().padStart(2, "0");
+    const ano = agora.getFullYear();
+
+    const horas = agora.getHours().toString().padStart(2, "0");
+    const minutos = agora.getMinutes().toString().padStart(2, "0");
+
+    dados.data = `${mes}/${dia}/${ano} ${horas}:${minutos}`;
+
+    //""+new Date().toLocaleString('pt-PT', { year: 'numeric', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'}).replace(', ', 'T').slice(0, 16)
 
     const r = await addCPAction.submit(dados as unknown as Record<string, unknown>);
       
